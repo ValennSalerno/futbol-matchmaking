@@ -1,5 +1,4 @@
 "use client";
-export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
 import { generarEquipos, JugadorCampo, Arquero } from "@/lib/matchmaking";

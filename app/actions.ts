@@ -16,7 +16,7 @@ export async function getDbData() {
       supabase.from('jugadores_campo').select('*'),
       supabase.from('arqueros').select('*'),
       supabase.from('partidos').select('*'),
-      supabase.from('partido_en_curso').select('datos').eq('id', 1).single()
+      supabase.from('partido_en_curso').select('datos').eq('id', 1).maybeSingle()
     ]);
 
     return {
