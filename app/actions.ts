@@ -4,10 +4,15 @@ import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-// Inicializamos el cliente de Supabase
+// Inicializamos el cliente de Supabase anulando el caché de Next.js
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  global: {
+    fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' })
+  }
+});
 
 export async function getDbData() {
   try {
