@@ -1,88 +1,106 @@
 'use server'
 
-import fs from 'fs/promises';
-import path from 'path';
+import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-// Cambia 'db.json' a 'db_test.json' para hacer tus pruebas
-const dbPath = path.join(process.cwd(), 'data/db.json');
+// Inicializamos el cliente de Supabase
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function getDbData() {
   try {
-    const file = await fs.readFile(dbPath, 'utf-8');
-    return JSON.parse(file);
-  } catch {
+    // Consultamos todas las tablas en paralelo
+    const [jugadoresRes, arquerosRes, partidosRes, enCursoRes] = await Promise.all([
+      supabase.from('jugadores_campo').select('*'),
+      supabase.from('arqueros').select('*'),
+      supabase.from('partidos').select('*'),
+      supabase.from('partido_en_curso').select('datos').eq('id', 1).single()
+    ]);
+
+    return {
+      jugadores_campo: jugadoresRes.data || [],
+      arqueros: arquerosRes.data || [],
+      partidos: partidosRes.data || [],
+      partido_en_curso: enCursoRes.data?.datos || null
+    };
+  } catch (error) {
+    console.error("Error al obtener datos:", error);
     return { jugadores_campo: [], arqueros: [], partidos: [], partido_en_curso: null };
   }
 }
 
 export async function guardarSorteo(formData: FormData) {
-  const data = await getDbData();
-  
   const equipoA = JSON.parse(formData.get('equipoA') as string);
   const equipoB = JSON.parse(formData.get('equipoB') as string);
   
-  // Inferencia automática del formato (14 jug = F7, 10 jug = F5)
   const formato = (equipoA.length + equipoB.length) === 14 ? 7 : 5;
 
-  data.partido_en_curso = {
+  const partidoEnCurso = {
     equipoA,
     equipoB,
     formato,
     fecha_sorteo: new Date().toISOString()
   };
 
-  await fs.writeFile(dbPath, JSON.stringify(data, null, 2));
+  // Guardamos el partido en curso en la fila 1
+  await supabase
+    .from('partido_en_curso')
+    .upsert({ id: 1, datos: partidoEnCurso });
+
   revalidatePath('/'); 
   redirect('/'); 
 }
 
 export async function resolverPartido(formData: FormData) {
-  const data = await getDbData();
-  
-  if (!data.partido_en_curso) return;
+  const { jugadores_campo, arqueros, partido_en_curso } = await getDbData();
+  if (!partido_en_curso) return;
 
   const nuevoPartido = {
     id: Date.now().toString(),
     fecha: new Date().toISOString(),
     sede: formData.get('sede'),
-    formato: data.partido_en_curso.formato, // Toma el formato inferido automáticamente
+    formato: partido_en_curso.formato,
     ganador: formData.get('ganador'),
-    equipoA: data.partido_en_curso.equipoA,
-    equipoB: data.partido_en_curso.equipoB,
+    equipo_a: partido_en_curso.equipoA, 
+    equipo_b: partido_en_curso.equipoB,
   };
 
-  data.partidos.push(nuevoPartido);
+  // 1. Insertamos el partido en el historial
+  await supabase.from('partidos').insert(nuevoPartido);
 
-  type JugadorDB = {
-    nombre: string;
-    partidos_totales: number;
-    partidos_jugados: number;
-    partidos_ganados: number;
-    [key: string]: unknown;
+  // Helper para actualizar estadísticas
+  const actualizarJugador = async (nombre: string, esGanador: boolean) => {
+    // Determinamos si es arquero, jugador de campo, o invitado
+    const isArquero = arqueros.some((a: { nombre: string }) => a.nombre === nombre);
+    const isCampo = jugadores_campo.some((j: { nombre: string }) => j.nombre === nombre);
+    const tabla = isArquero ? 'arqueros' : isCampo ? 'jugadores_campo' : null;
+
+    if (!tabla) return; // Es un invitado, lo ignoramos
+    
+    const jugadorActual = isArquero 
+      ? arqueros.find((a: { nombre: string }) => a.nombre === nombre)
+      : jugadores_campo.find((j: { nombre: string }) => j.nombre === nombre);
+
+    await supabase.from(tabla).update({
+      partidos_totales: jugadorActual.partidos_totales + 1,
+      partidos_jugados: jugadorActual.partidos_jugados + 1,
+      partidos_ganados: jugadorActual.partidos_ganados + (esGanador ? 1 : 0)
+    }).eq('nombre', nombre);
   };
 
-  const actualizarStats = (jugadorDb: JugadorDB, nombre: string, esGanador: boolean) => {
-    if (jugadorDb.nombre === nombre) {
-      jugadorDb.partidos_totales += 1;
-      jugadorDb.partidos_jugados += 1;
-      if (esGanador) jugadorDb.partidos_ganados += 1;
-    }
+  const procesarEquipo = async (nombres: string[], esGanador: boolean) => {
+    const promesas = nombres.map(nombre => actualizarJugador(nombre, esGanador));
+    await Promise.all(promesas);
   };
 
-  const procesarEquipo = (nombresEquipo: string[], esGanador: boolean) => {
-    nombresEquipo.forEach(nombre => {
-      data.jugadores_campo.forEach((j: JugadorDB) => actualizarStats(j, nombre, esGanador));
-      data.arqueros.forEach((a: JugadorDB) => actualizarStats(a, nombre, esGanador));
-    });
-  };
+  // 2. Procesamos ambos equipos y limpiamos el partido en curso en paralelo
+  await Promise.all([
+    procesarEquipo(partido_en_curso.equipoA, nuevoPartido.ganador === 'A'),
+    procesarEquipo(partido_en_curso.equipoB, nuevoPartido.ganador === 'B'),
+    supabase.from('partido_en_curso').update({ datos: null }).eq('id', 1)
+  ]);
 
-  procesarEquipo(nuevoPartido.equipoA, nuevoPartido.ganador === 'A');
-  procesarEquipo(nuevoPartido.equipoB, nuevoPartido.ganador === 'B');
-
-  data.partido_en_curso = null;
-
-  await fs.writeFile(dbPath, JSON.stringify(data, null, 2));
   revalidatePath('/'); 
 }
