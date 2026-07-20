@@ -1,65 +1,216 @@
-import Image from "next/image";
+import { getDbData, resolverPartido } from "./actions";
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-export default function Home() {
+export default async function Home() {
+  const db = await getDbData();
+  const { partidos, jugadores_campo, arqueros, partido_en_curso } = db;
+
+  const totalPartidos = 34 + (partidos?.length || 0);
+  const ultimoPartido =
+    partidos?.length > 0
+      ? new Date(partidos[partidos.length - 1].fecha).toLocaleDateString()
+      : "18/7/2026";
+
+  const todosLosJugadores = [...(jugadores_campo || []), ...(arqueros || [])]
+    .filter((j) => j.partidos_totales > 0)
+    .sort((a, b) => b.partidos_totales - a.partidos_totales);
+
+  const capitanA = partido_en_curso?.equipoA?.[0] || "A";
+  const capitanB = partido_en_curso?.equipoB?.[0] || "B";
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <main className="p-8 max-w-6xl mx-auto space-y-8 min-h-screen selection:bg-emerald-500/30">
+      <div className="flex items-center gap-3 mb-10">
+        <div className="h-10 w-3 bg-emerald-500 rounded-full"></div>
+        <h1 className="text-5xl font-black tracking-tight text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-cyan-400">
+          Taquito FC
+        </h1>
+      </div>
+
+      {partido_en_curso && (
+        <Card className="bg-slate-900 border-emerald-500/50 shadow-emerald-500/10 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500 animate-pulse"></div>
+          <CardHeader>
+            <CardTitle className="text-emerald-400 flex items-center gap-2">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+              </span>
+              Partido en Curso (Fútbol {partido_en_curso.formato})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form
+              action={resolverPartido}
+              className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-400">Sede</label>
+                <input
+                  name="sede"
+                  placeholder="Ej: Sagrado"
+                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-3 rounded-lg outline-none focus:border-emerald-500"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-400">
+                  Ganador
+                </label>
+                <select
+                  name="ganador"
+                  defaultValue=""
+                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-3 rounded-lg outline-none focus:border-emerald-500"
+                  required
+                >
+                  <option value="" disabled>
+                    Seleccionar...
+                  </option>
+
+                  <option value="A">Equipo de {capitanA}</option>
+                  <option value="B">Equipo de {capitanB}</option>
+
+                  <option value="Empate">Empate</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold p-3 rounded-lg transition-colors h-12.5"
+              >
+                Cargar Resultado
+              </button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="bg-slate-900 border-slate-800 shadow-xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-slate-400 uppercase text-xs font-bold tracking-wider">
+              Partidos Totales
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-5xl font-black text-white">{totalPartidos}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-slate-900 border-slate-800 shadow-xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-slate-400 uppercase text-xs font-bold tracking-wider">
+              Último Partido
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-4xl font-bold text-emerald-400">
+              {ultimoPartido}
+            </p>
+          </CardContent>
+        </Card>
+
+        {!partido_en_curso ? (
+          <Link
+            href="/matchmaking"
+            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl p-6 transition-all shadow-xl flex flex-col justify-center items-center hover:scale-[1.02] active:scale-95"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            <span className="text-3xl mb-1">⚽</span>
+            <span className="text-xl tracking-tight uppercase">
+              Armar Equipos
+            </span>
+          </Link>
+        ) : (
+          <Card className="bg-slate-900 border-slate-800 shadow-xl flex flex-col justify-center items-center opacity-50">
+            <span className="text-slate-500 font-bold uppercase text-center p-4">
+              Termina el partido actual <br /> para armar otro
+            </span>
+          </Card>
+        )}
+      </div>
+
+      <Card className="bg-slate-900 border-slate-800 shadow-xl overflow-hidden">
+        <CardHeader className="border-b border-slate-800 bg-slate-900/50">
+          <CardTitle className="text-xl font-bold text-slate-200">
+            Rendimiento y Asistencia
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader className="bg-slate-950/50">
+              <TableRow className="border-slate-800 hover:bg-transparent">
+                <TableHead className="text-slate-400 font-bold">Pos</TableHead>
+                <TableHead className="text-slate-400 font-bold">
+                  Jugador
+                </TableHead>
+                <TableHead className="text-slate-400 font-bold text-center">
+                  PJ
+                </TableHead>
+                <TableHead className="text-slate-400 font-bold text-center">
+                  % Asistencia
+                </TableHead>
+                <TableHead className="text-slate-400 font-bold text-center">
+                  Winrate
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {todosLosJugadores.map((j, index) => {
+                const asistencia = Math.round(
+                  (j.partidos_totales / totalPartidos) * 100,
+                );
+                const winrate =
+                  j.partidos_jugados > 0
+                    ? Math.round(
+                        (j.partidos_ganados / j.partidos_jugados) * 100,
+                      )
+                    : 0;
+                const isTop3 = index < 3;
+
+                return (
+                  <TableRow
+                    key={j.nombre}
+                    className="border-slate-800 hover:bg-slate-800/50 transition-colors"
+                  >
+                    <TableCell
+                      className={`font-black ${isTop3 ? "text-emerald-400" : "text-slate-500"}`}
+                    >
+                      #{index + 1}
+                    </TableCell>
+                    <TableCell className="font-bold text-slate-200">
+                      {j.nombre}
+                    </TableCell>
+                    <TableCell className="text-center font-medium text-slate-300">
+                      {j.partidos_totales}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="bg-slate-800 text-slate-300 py-1 px-2 rounded-md font-bold text-sm">
+                        {asistencia}%
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span
+                        className={`py-1 px-2 rounded-md font-bold text-sm ${winrate > 50 ? "text-emerald-400 bg-emerald-400/10" : winrate > 0 ? "text-yellow-400 bg-yellow-400/10" : "text-slate-500"}`}
+                      >
+                        {winrate}%
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </main>
   );
 }

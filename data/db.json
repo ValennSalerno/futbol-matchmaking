@@ -1,0 +1,275 @@
+{
+  "jugadores_campo": [
+    {
+      "nombre": "Valen",
+      "tiro_al_arco": 9,
+      "defensa": 7,
+      "velocidad": 7,
+      "fisico": 7,
+      "pase_salida": 6,
+      "partidos_jugados": 3,
+      "partidos_totales": 18,
+      "partidos_ganados": 2
+    },
+    {
+      "nombre": "Franco",
+      "tiro_al_arco": 5,
+      "defensa": 6,
+      "velocidad": 9,
+      "fisico": 6,
+      "pase_salida": 10,
+      "partidos_jugados": 0,
+      "partidos_totales": 13,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Mati Toledo",
+      "tiro_al_arco": 6,
+      "defensa": 7,
+      "velocidad": 7,
+      "fisico": 7,
+      "pase_salida": 7,
+      "partidos_jugados": 1,
+      "partidos_totales": 19,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Agus Fatur",
+      "tiro_al_arco": 5,
+      "defensa": 10,
+      "velocidad": 6,
+      "fisico": 8,
+      "pase_salida": 10,
+      "partidos_jugados": 1,
+      "partidos_totales": 18,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Agus Ross",
+      "tiro_al_arco": 8,
+      "defensa": 8,
+      "velocidad": 8,
+      "fisico": 7,
+      "pase_salida": 10,
+      "partidos_totales": 17,
+      "partidos_jugados": 1,
+      "partidos_ganados": 1
+    },
+    {
+      "nombre": "Agus Ruiz",
+      "tiro_al_arco": 4,
+      "defensa": 7,
+      "velocidad": 7,
+      "fisico": 8,
+      "pase_salida": 4,
+      "partidos_jugados": 1,
+      "partidos_totales": 10,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Ari",
+      "tiro_al_arco": 7,
+      "defensa": 9,
+      "velocidad": 8,
+      "fisico": 7,
+      "pase_salida": 8,
+      "partidos_totales": 15,
+      "partidos_jugados": 0,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Chiffo",
+      "tiro_al_arco": 9,
+      "defensa": 8,
+      "velocidad": 7,
+      "fisico": 8,
+      "pase_salida": 6,
+      "partidos_jugados": 1,
+      "partidos_totales": 28,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Chino",
+      "tiro_al_arco": 7,
+      "defensa": 8,
+      "velocidad": 9,
+      "fisico": 7,
+      "pase_salida": 10,
+      "partidos_jugados": 1,
+      "partidos_totales": 26,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Cris",
+      "tiro_al_arco": 5,
+      "defensa": 7,
+      "velocidad": 6,
+      "fisico": 5,
+      "pase_salida": 4,
+      "partidos_totales": 2,
+      "partidos_jugados": 0,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Negro",
+      "tiro_al_arco": 7,
+      "defensa": 6,
+      "velocidad": 6,
+      "fisico": 6,
+      "pase_salida": 6,
+      "partidos_totales": 9,
+      "partidos_jugados": 0,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Gonza",
+      "tiro_al_arco": 6,
+      "defensa": 10,
+      "velocidad": 6,
+      "fisico": 10,
+      "pase_salida": 8,
+      "partidos_totales": 13,
+      "partidos_jugados": 2,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Gonzi",
+      "tiro_al_arco": 6,
+      "defensa": 9,
+      "velocidad": 6,
+      "fisico": 8,
+      "pase_salida": 7,
+      "partidos_totales": 3,
+      "partidos_jugados": 0,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Kevin",
+      "tiro_al_arco": 7,
+      "defensa": 9,
+      "velocidad": 8,
+      "fisico": 7,
+      "pase_salida": 7,
+      "partidos_totales": 23,
+      "partidos_jugados": 1,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Leo",
+      "tiro_al_arco": 10,
+      "defensa": 9,
+      "velocidad": 8,
+      "fisico": 7,
+      "pase_salida": 10,
+      "partidos_jugados": 2,
+      "partidos_totales": 22,
+      "partidos_ganados": 1
+    },
+    {
+      "nombre": "Mati Bianchi",
+      "tiro_al_arco": 6,
+      "defensa": 7,
+      "velocidad": 8,
+      "fisico": 8,
+      "pase_salida": 6,
+      "partidos_jugados": 1,
+      "partidos_totales": 21,
+      "partidos_ganados": 1
+    },
+    {
+      "nombre": "Nahue",
+      "tiro_al_arco": 7,
+      "defensa": 6,
+      "velocidad": 5,
+      "fisico": 5,
+      "pase_salida": 5,
+      "partidos_jugados": 1,
+      "partidos_totales": 28,
+      "partidos_ganados": 1
+    },
+    {
+      "nombre": "Dylan",
+      "tiro_al_arco": 6,
+      "defensa": 7,
+      "velocidad": 7,
+      "fisico": 7,
+      "pase_salida": 7,
+      "partidos_jugados": 1,
+      "partidos_totales": 5,
+      "partidos_ganados": 1
+    },
+    {
+      "nombre": "Pitiki",
+      "tiro_al_arco": 10,
+      "defensa": 6,
+      "velocidad": 8,
+      "fisico": 7,
+      "pase_salida": 10,
+      "partidos_totales": 7,
+      "partidos_jugados": 0,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Cubi",
+      "tiro_al_arco": 6,
+      "defensa": 8,
+      "velocidad": 7,
+      "fisico": 7,
+      "pase_salida": 8,
+      "partidos_totales": 8,
+      "partidos_jugados": 0,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Peluque",
+      "tiro_al_arco": 5,
+      "defensa": 7,
+      "velocidad": 6,
+      "fisico": 7,
+      "pase_salida": 7,
+      "partidos_totales": 4,
+      "partidos_jugados": 0,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Mati P",
+      "tiro_al_arco": 6,
+      "defensa": 7,
+      "velocidad": 7,
+      "fisico": 7,
+      "pase_salida": 6,
+      "partidos_totales": 3,
+      "partidos_jugados": 0,
+      "partidos_ganados": 0
+    },
+    {
+      "nombre": "Rama",
+      "tiro_al_arco": 8,
+      "defensa": 9,
+      "velocidad": 7,
+      "fisico": 8,
+      "pase_salida": 8,
+      "partidos_totales": 21,
+      "partidos_jugados": 2,
+      "partidos_ganados": 1
+    }
+  ],
+  "arqueros": [
+    {
+      "nombre": "Junco",
+      "valoracion_general": 8.5,
+      "partidos_totales": 17,
+      "partidos_jugados": 2,
+      "partidos_ganados": 2
+    },
+    {
+      "nombre": "Junquito",
+      "valoracion_general": 8.5,
+      "partidos_totales": 10,
+      "partidos_jugados": 1,
+      "partidos_ganados": 1
+    }
+  ],
+  "partidos": [],
+  "partido_en_curso": null
+}
