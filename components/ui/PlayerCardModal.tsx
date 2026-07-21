@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect } from "react";
 import {
   ResponsiveContainer,
   RadarChart,
@@ -9,7 +10,6 @@ import {
   PolarRadiusAxis,
   Radar,
 } from "recharts";
-import { X } from "lucide-react"; // Asumiendo que usas lucide-react para íconos
 
 type JugadorCampo = {
   nombre: string;
@@ -38,13 +38,20 @@ export default function PlayerCardModal({
   const router = useRouter();
   const searchParams = useSearchParams();
   const nombreJugador = searchParams.get("jugador");
+  const closeModal = useCallback(() => router.push("/"), [router]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeModal();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [closeModal]);
 
   if (!nombreJugador) return null;
 
   const jugador = jugadoresDb.find((j) => j.nombre === nombreJugador);
   if (!jugador) return null;
-
-  const closeModal = () => router.push("/");
 
   // Verificamos si es jugador de campo (tiene tiro_al_arco) o arquero
   const esJugadorCampo = "tiro_al_arco" in jugador;
@@ -81,16 +88,14 @@ export default function PlayerCardModal({
     : [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-2xl bg-linear-to-br from-indigo-950 to-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl flex flex-col md:flex-row gap-8 items-center">
-        {/* Botón de cierre */}
-        <button
-          onClick={closeModal}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white"
-        >
-          <X size={24} />
-        </button>
-
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4"
+      onClick={closeModal}
+    >
+      <div
+        className="relative w-full max-w-2xl bg-linear-to-br from-indigo-950 to-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl flex flex-col md:flex-row gap-8 items-center"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Sección de la Carta (Izquierda) */}
         <div className="relative w-48 h-72 bg-linear-to-b from-amber-500 to-amber-700 rounded-lg p-1 shadow-[0_0_20px_rgba(245,158,11,0.3)]">
           <div className="absolute top-2 left-2 text-white font-black drop-shadow-md">
