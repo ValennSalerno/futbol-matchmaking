@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-import { getDbData } from "./actions";
+import { getDbData, resolverPartido } from "./actions";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -36,14 +36,14 @@ export default async function Home() {
       return winrateB - winrateA;
     });
 
-  const contadoresFormato: Record<number, number> = { 5: 5, 7: 15, 8: 0, 9: 0 };
+  const contadoresFormato: Record<number, number> = { 5: 7, 7: 27, 8: 0, 9: 0 };
   const contadoresMeses: Record<number, number> = {
     0: 6,
     1: 4,
     2: 6,
     3: 4,
-    4: 0,
-    5: 0,
+    4: 5,
+    5: 6,
     6: 3,
     7: 0,
     8: 0,
@@ -111,21 +111,55 @@ export default async function Home() {
           </Card>
 
           {partido_en_curso ? (
-            <div className="flex items-center justify-center bg-slate-800 rounded-xl border border-slate-700 p-4 opacity-50 cursor-not-allowed">
-              <span className="font-bold text-slate-400 flex flex-col items-center gap-1">
-                <span>⚽</span>
-                DRAFT ACTIVO
-              </span>
-            </div>
+            <Card className="bg-slate-900 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)] flex flex-col justify-center">
+              <CardHeader className="pb-2 pt-4">
+                <CardTitle className="text-xs font-bold text-emerald-400 uppercase tracking-wider text-center flex items-center justify-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  Partido en Curso
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form
+                  action={resolverPartido}
+                  className="grid grid-cols-2 gap-2"
+                >
+                  <button
+                    type="submit"
+                    name="ganador"
+                    value="equipoA"
+                    className="bg-cyan-900/40 hover:bg-cyan-700 border border-cyan-800 text-cyan-100 font-bold py-2 rounded-lg transition-colors text-sm"
+                  >
+                    Gana A
+                  </button>
+                  <button
+                    type="submit"
+                    name="ganador"
+                    value="equipoB"
+                    className="bg-emerald-900/40 hover:bg-emerald-700 border border-emerald-800 text-emerald-100 font-bold py-2 rounded-lg transition-colors text-sm"
+                  >
+                    Gana B
+                  </button>
+                  <button
+                    type="submit"
+                    name="ganador"
+                    value="empate"
+                    className="col-span-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2 rounded-lg transition-colors text-sm mt-1"
+                  >
+                    Empate
+                  </button>
+                </form>
+              </CardContent>
+            </Card>
           ) : (
             <Link
               href="/matchmaking"
-              className="flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 transition-colors rounded-xl font-bold text-slate-950 p-4 shadow-lg shadow-emerald-500/20"
+              className="w-full h-full min-h-30 flex flex-col items-center justify-center bg-emerald-500 hover:bg-emerald-400 transition-all rounded-xl border border-emerald-400 font-bold text-slate-950 shadow-lg shadow-emerald-500/20"
             >
-              <span className="flex flex-col items-center gap-1">
-                <span>⚽</span>
-                ARMAR EQUIPOS
-              </span>
+              <span className="text-2xl mb-1">⚽</span>
+              ARMAR EQUIPOS
             </Link>
           )}
         </div>
@@ -249,11 +283,6 @@ export default async function Home() {
             </Card>
 
             <Card className="bg-slate-900 border-slate-800">
-              <CardHeader className="bg-slate-950/40 border-b border-slate-800 py-4">
-                <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center">
-                  Mes
-                </CardTitle>
-              </CardHeader>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>

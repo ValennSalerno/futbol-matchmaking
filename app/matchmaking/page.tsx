@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { generarEquipos, JugadorCampo, Arquero } from "@/lib/matchmaking";
 import { getDbData, guardarSorteo } from "../actions";
@@ -25,12 +26,26 @@ export default function Matchmaking() {
     equipoB: JugadorEquipo[];
   } | null>(null);
 
+  const router = useRouter();
+
   useEffect(() => {
     getDbData().then(setDb);
   }, []);
 
+  useEffect(() => {
+    getDbData().then((data) => {
+      // Si ya hay un partido, lo pateamos al Home
+      if (data.partido_en_curso) {
+        router.push("/");
+        return;
+      }
+      setDb(data);
+    });
+  }, [router]);
+
   const totalJugadores = seleccionados.length + invitados.length;
-  const esCantidadValida = totalJugadores === 10 || totalJugadores === 14;
+  const formatosValidos = [10, 12, 14, 16, 18];
+  const esCantidadValida = formatosValidos.includes(totalJugadores);
 
   const todosLosJugadores = [...db.jugadores_campo, ...db.arqueros];
   const jugadoresDisponibles = todosLosJugadores.filter(
@@ -160,7 +175,9 @@ export default function Matchmaking() {
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-            <h3 className="text-slate-400 font-bold mb-4">Convocados</h3>
+            <h3 className="text-slate-400 font-bold mb-4">
+              Convocados: {totalJugadores}
+            </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {seleccionados.map((nombre) => (
                 <div
@@ -205,7 +222,7 @@ export default function Matchmaking() {
           >
             {esCantidadValida
               ? "Sortear Equipos 🎲"
-              : `Se requieren al menos 10 jugadores (Actual: ${totalJugadores})`}
+              : `Deben ser 10, 12, 14, 16 o 18 (Actual: ${totalJugadores})`}
           </button>
         </div>
       ) : (

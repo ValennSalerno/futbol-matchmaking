@@ -37,10 +37,17 @@ export async function getDbData() {
 }
 
 export async function guardarSorteo(formData: FormData) {
+  // 1. Verificamos que la base de datos esté libre
+  const { partido_en_curso: activo } = await getDbData();
+  if (activo) {
+    console.error("Intento de sobrescritura bloqueado");
+    redirect('/'); 
+  }
+
   const equipoA = JSON.parse(formData.get('equipoA') as string);
   const equipoB = JSON.parse(formData.get('equipoB') as string);
   
-  const formato = (equipoA.length + equipoB.length) === 14 ? 7 : 5;
+  const formato = (equipoA.length + equipoB.length) / 2;
 
   const partidoEnCurso = {
     equipoA,
@@ -108,4 +115,10 @@ export async function resolverPartido(formData: FormData) {
   ]);
 
   revalidatePath('/'); 
+}
+
+export async function cancelarPartidoEnCurso() {
+  await supabase.from('partido_en_curso').update({ datos: null }).eq('id', 1);
+  revalidatePath('/'); 
+  revalidatePath('/test');
 }
