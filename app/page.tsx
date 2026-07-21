@@ -3,6 +3,8 @@ export const revalidate = 0;
 
 import { getDbData, resolverPartido } from "./actions";
 import Link from "next/link";
+import PlayerCardModal from "@/components/ui/PlayerCardModal";
+import ClickableRow from "@/components/ui/ClickableRow";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -218,7 +220,11 @@ export default async function Home() {
                       else rowStyles += "hover:bg-slate-800/50";
 
                       return (
-                        <TableRow key={j.nombre} className={rowStyles}>
+                        <ClickableRow
+                          key={j.nombre}
+                          nombreJugador={j.nombre}
+                          className={rowStyles}
+                        >
                           <TableCell
                             className={`font-black ${isTop3 ? "text-emerald-400" : "text-slate-500"}`}
                           >
@@ -242,7 +248,7 @@ export default async function Home() {
                               {winrate}%
                             </span>
                           </TableCell>
-                        </TableRow>
+                        </ClickableRow>
                       );
                     })}
                   </TableBody>
@@ -317,6 +323,7 @@ export default async function Home() {
           </div>
         </div>
       </div>
+      <PlayerCardModal jugadoresDb={todosLosJugadores} />
     </main>
   );
 }
