@@ -85,7 +85,7 @@ export default function Matchmaking() {
   return (
     <main className="p-8 max-w-4xl mx-auto space-y-8 min-h-screen selection:bg-emerald-500/30">
       <div className="flex items-center justify-between">
-        <h1 className="text-4xl font-black tracking-tight text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-cyan-400">
+        <h1 className="text-4xl font-black pb-2 tracking-tight text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-cyan-400">
           Draft de Jugadores
         </h1>
         <Link
@@ -160,9 +160,7 @@ export default function Matchmaking() {
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-            <h3 className="text-slate-400 font-bold mb-4">
-              Convocados ({totalJugadores}/14)
-            </h3>
+            <h3 className="text-slate-400 font-bold mb-4">Convocados</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {seleccionados.map((nombre) => (
                 <div
@@ -207,7 +205,7 @@ export default function Matchmaking() {
           >
             {esCantidadValida
               ? "Sortear Equipos 🎲"
-              : `Se requieren 10 o 14 jugadores (Actual: ${totalJugadores})`}
+              : `Se requieren al menos 10 jugadores (Actual: ${totalJugadores})`}
           </button>
         </div>
       ) : (

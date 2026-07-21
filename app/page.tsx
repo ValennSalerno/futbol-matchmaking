@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-import { getDbData, resolverPartido } from "./actions";
+import { getDbData } from "./actions";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -25,195 +25,269 @@ export default async function Home() {
 
   const todosLosJugadores = [...(jugadores_campo || []), ...(arqueros || [])]
     .filter((j) => j.partidos_totales > 0)
-    .sort((a, b) => b.partidos_totales - a.partidos_totales);
+    .sort((a, b) => {
+      if (b.partidos_totales !== a.partidos_totales) {
+        return b.partidos_totales - a.partidos_totales;
+      }
+      const winrateA =
+        a.partidos_jugados > 0 ? a.partidos_ganados / a.partidos_jugados : 0;
+      const winrateB =
+        b.partidos_jugados > 0 ? b.partidos_ganados / b.partidos_jugados : 0;
+      return winrateB - winrateA;
+    });
 
-  const capitanA = partido_en_curso?.equipoA?.[0] || "A";
-  const capitanB = partido_en_curso?.equipoB?.[0] || "B";
+  const contadoresFormato: Record<number, number> = { 5: 5, 7: 15, 8: 0, 9: 0 };
+  const contadoresMeses: Record<number, number> = {
+    0: 6,
+    1: 4,
+    2: 6,
+    3: 4,
+    4: 0,
+    5: 0,
+    6: 3,
+    7: 0,
+    8: 0,
+    9: 0,
+    10: 0,
+    11: 0,
+  };
+
+  partidos?.forEach((p) => {
+    if (p.formato)
+      contadoresFormato[p.formato] = (contadoresFormato[p.formato] || 0) + 1;
+    if (p.fecha) {
+      const mes = new Date(p.fecha).getMonth();
+      contadoresMeses[mes] = (contadoresMeses[mes] || 0) + 1;
+    }
+  });
+
+  const nombresMeses = [
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
+  ];
 
   return (
-    <main className="p-8 max-w-6xl mx-auto space-y-8 min-h-screen selection:bg-emerald-500/30">
-      <div className="flex items-center gap-3 mb-10">
-        <div className="h-10 w-3 bg-emerald-500 rounded-full"></div>
-        <h1 className="text-5xl font-black tracking-tight text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-cyan-400">
-          Taquito FC
+    <main className="min-h-screen bg-slate-950 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <h1 className="text-4xl font-extrabold text-emerald-400 pb-2">
+          | Taquito FC
         </h1>
-      </div>
 
-      {partido_en_curso && (
-        <Card className="bg-slate-900 border-emerald-500/50 shadow-emerald-500/10 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500 animate-pulse"></div>
-          <CardHeader>
-            <CardTitle className="text-emerald-400 flex items-center gap-2">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-              </span>
-              Partido en Curso (Fútbol {partido_en_curso.formato})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form
-              action={resolverPartido}
-              className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end"
-            >
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-400">Sede</label>
-                <input
-                  name="sede"
-                  placeholder="Ej: Sagrado"
-                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-3 rounded-lg outline-none focus:border-emerald-500"
-                  required
-                />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="bg-slate-900 border-slate-800">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Partidos Totales
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-black text-slate-100">
+                {totalPartidos}
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-400">
-                  Ganador
-                </label>
-                <select
-                  name="ganador"
-                  defaultValue=""
-                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-3 rounded-lg outline-none focus:border-emerald-500"
-                  required
-                >
-                  <option value="" disabled>
-                    Seleccionar...
-                  </option>
-
-                  <option value="A">Equipo de {capitanA}</option>
-                  <option value="B">Equipo de {capitanB}</option>
-
-                  <option value="Empate">Empate</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold p-3 rounded-lg transition-colors h-12.5"
-              >
-                Cargar Resultado
-              </button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-slate-900 border-slate-800 shadow-xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-slate-400 uppercase text-xs font-bold tracking-wider">
-              Partidos Totales
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-5xl font-black text-white">{totalPartidos}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-900 border-slate-800 shadow-xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-slate-400 uppercase text-xs font-bold tracking-wider">
-              Último Partido
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-bold text-emerald-400">
-              {ultimoPartido}
-            </p>
-          </CardContent>
-        </Card>
-
-        {!partido_en_curso ? (
-          <Link
-            href="/matchmaking"
-            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl p-6 transition-all shadow-xl flex flex-col justify-center items-center hover:scale-[1.02] active:scale-95"
-          >
-            <span className="text-3xl mb-1">⚽</span>
-            <span className="text-xl tracking-tight uppercase">
-              Armar Equipos
-            </span>
-          </Link>
-        ) : (
-          <Card className="bg-slate-900 border-slate-800 shadow-xl flex flex-col justify-center items-center opacity-50">
-            <span className="text-slate-500 font-bold uppercase text-center p-4">
-              Termina el partido actual <br /> para armar otro
-            </span>
+            </CardContent>
           </Card>
-        )}
+
+          <Card className="bg-slate-900 border-slate-800">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Último Partido
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-black text-emerald-500">
+                {ultimoPartido}
+              </div>
+            </CardContent>
+          </Card>
+
+          {partido_en_curso ? (
+            <div className="flex items-center justify-center bg-slate-800 rounded-xl border border-slate-700 p-4 opacity-50 cursor-not-allowed">
+              <span className="font-bold text-slate-400 flex flex-col items-center gap-1">
+                <span>⚽</span>
+                DRAFT ACTIVO
+              </span>
+            </div>
+          ) : (
+            <Link
+              href="/matchmaking"
+              className="flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 transition-colors rounded-xl font-bold text-slate-950 p-4 shadow-lg shadow-emerald-500/20"
+            >
+              <span className="flex flex-col items-center gap-1">
+                <span>⚽</span>
+                ARMAR EQUIPOS
+              </span>
+            </Link>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card className="bg-slate-900 border-slate-800 h-full">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold text-slate-100">
+                  Rendimiento y Asistencia
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-slate-800 hover:bg-transparent">
+                      <TableHead className="font-bold text-slate-400 w-16">
+                        Pos
+                      </TableHead>
+                      <TableHead className="font-bold text-slate-400">
+                        Jugador
+                      </TableHead>
+                      <TableHead className="font-bold text-slate-400 text-center">
+                        PJ
+                      </TableHead>
+                      <TableHead className="font-bold text-slate-400 text-center">
+                        % Asistencia
+                      </TableHead>
+                      <TableHead className="font-bold text-slate-400 text-center">
+                        Winrate
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {todosLosJugadores.map((j, index) => {
+                      const asistencia = Math.round(
+                        (j.partidos_totales / totalPartidos) * 100,
+                      );
+                      const winrate =
+                        j.partidos_jugados > 0
+                          ? Math.round(
+                              (j.partidos_ganados / j.partidos_jugados) * 100,
+                            )
+                          : 0;
+
+                      const pos = index + 1;
+                      const isTop3 = pos <= 3;
+                      const isSudamericana = pos >= 4 && pos <= 10;
+                      const isDescenso = pos >= 21 && pos <= 25;
+
+                      let rowStyles = "border-slate-800 transition-colors ";
+                      if (isTop3 || isSudamericana)
+                        rowStyles += "bg-sky-900/20 hover:bg-sky-900/40";
+                      else if (isDescenso)
+                        rowStyles += "bg-red-900/20 hover:bg-red-900/40";
+                      else rowStyles += "hover:bg-slate-800/50";
+
+                      return (
+                        <TableRow key={j.nombre} className={rowStyles}>
+                          <TableCell
+                            className={`font-black ${isTop3 ? "text-emerald-400" : "text-slate-500"}`}
+                          >
+                            #{pos}
+                          </TableCell>
+                          <TableCell className="font-bold text-slate-200">
+                            {j.nombre}
+                          </TableCell>
+                          <TableCell className="text-center font-medium text-slate-300">
+                            {j.partidos_totales}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span className="bg-slate-800 text-slate-300 py-1 px-2 rounded-md font-bold text-sm">
+                              {asistencia}%
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span
+                              className={`py-1 px-2 rounded-md font-bold text-sm ${winrate > 50 ? "text-emerald-400 bg-emerald-400/10" : winrate > 0 ? "text-yellow-400 bg-yellow-400/10" : "text-slate-500"}`}
+                            >
+                              {winrate}%
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-6">
+            <Card className="bg-slate-900 border-slate-800">
+              <CardHeader className="bg-slate-950/40 border-b border-slate-800 py-4">
+                <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center">
+                  Formato
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableBody>
+                    {[7, 5, 8, 9].map(
+                      (formato) =>
+                        contadoresFormato[formato] > 0 && (
+                          <TableRow
+                            key={formato}
+                            className="border-slate-800 hover:bg-slate-800/50"
+                          >
+                            <TableCell className="font-bold text-slate-300">
+                              Fútbol {formato}
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-emerald-400">
+                              {contadoresFormato[formato]}
+                            </TableCell>
+                          </TableRow>
+                        ),
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-slate-900 border-slate-800">
+              <CardHeader className="bg-slate-950/40 border-b border-slate-800 py-4">
+                <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center">
+                  Mes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-slate-800 hover:bg-transparent bg-slate-900/20">
+                      <TableHead className="text-slate-400">Mes</TableHead>
+                      <TableHead className="text-right text-slate-400">
+                        Jugados
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {nombresMeses.map(
+                      (mes, index) =>
+                        contadoresMeses[index] > 0 && (
+                          <TableRow
+                            key={mes}
+                            className="border-slate-800 hover:bg-slate-800/50"
+                          >
+                            <TableCell className="font-medium text-slate-300">
+                              {mes}
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-slate-100">
+                              {contadoresMeses[index]}
+                            </TableCell>
+                          </TableRow>
+                        ),
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
-
-      <Card className="bg-slate-900 border-slate-800 shadow-xl overflow-hidden">
-        <CardHeader className="border-b border-slate-800 bg-slate-900/50">
-          <CardTitle className="text-xl font-bold text-slate-200">
-            Rendimiento y Asistencia
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-slate-950/50">
-              <TableRow className="border-slate-800 hover:bg-transparent">
-                <TableHead className="text-slate-400 font-bold">Pos</TableHead>
-                <TableHead className="text-slate-400 font-bold">
-                  Jugador
-                </TableHead>
-                <TableHead className="text-slate-400 font-bold text-center">
-                  PJ
-                </TableHead>
-                <TableHead className="text-slate-400 font-bold text-center">
-                  % Asistencia
-                </TableHead>
-                <TableHead className="text-slate-400 font-bold text-center">
-                  Winrate
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {todosLosJugadores.map((j, index) => {
-                const asistencia = Math.round(
-                  (j.partidos_totales / totalPartidos) * 100,
-                );
-                const winrate =
-                  j.partidos_jugados > 0
-                    ? Math.round(
-                        (j.partidos_ganados / j.partidos_jugados) * 100,
-                      )
-                    : 0;
-                const isTop3 = index < 3;
-
-                return (
-                  <TableRow
-                    key={j.nombre}
-                    className="border-slate-800 hover:bg-slate-800/50 transition-colors"
-                  >
-                    <TableCell
-                      className={`font-black ${isTop3 ? "text-emerald-400" : "text-slate-500"}`}
-                    >
-                      #{index + 1}
-                    </TableCell>
-                    <TableCell className="font-bold text-slate-200">
-                      {j.nombre}
-                    </TableCell>
-                    <TableCell className="text-center font-medium text-slate-300">
-                      {j.partidos_totales}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className="bg-slate-800 text-slate-300 py-1 px-2 rounded-md font-bold text-sm">
-                        {asistencia}%
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span
-                        className={`py-1 px-2 rounded-md font-bold text-sm ${winrate > 50 ? "text-emerald-400 bg-emerald-400/10" : winrate > 0 ? "text-yellow-400 bg-yellow-400/10" : "text-slate-500"}`}
-                      >
-                        {winrate}%
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </main>
   );
 }
