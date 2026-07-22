@@ -134,7 +134,10 @@ export default async function Home() {
                     value="equipoA"
                     className="bg-cyan-900/40 hover:bg-cyan-700 border border-cyan-800 text-cyan-100 font-bold py-2 rounded-lg transition-colors text-sm"
                   >
-                    Gana A
+                    Gana{" "}
+                    {partido_en_curso?.datos?.equipoA?.[0] ||
+                      partido_en_curso?.equipoA?.[0] ||
+                      "A"}
                   </button>
                   <button
                     type="submit"
@@ -142,7 +145,10 @@ export default async function Home() {
                     value="equipoB"
                     className="bg-emerald-900/40 hover:bg-emerald-700 border border-emerald-800 text-emerald-100 font-bold py-2 rounded-lg transition-colors text-sm"
                   >
-                    Gana B
+                    Gana{" "}
+                    {partido_en_curso?.datos?.equipoB?.[0] ||
+                      partido_en_curso?.equipoB?.[0] ||
+                      "B"}
                   </button>
                   <button
                     type="submit"
