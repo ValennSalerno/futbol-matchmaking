@@ -109,8 +109,8 @@ export async function resolverPartido(formData: FormData) {
 
   // 2. Procesamos ambos equipos y limpiamos el partido en curso en paralelo
   await Promise.all([
-    procesarEquipo(partido_en_curso.equipoA, nuevoPartido.ganador === 'A'),
-    procesarEquipo(partido_en_curso.equipoB, nuevoPartido.ganador === 'B'),
+    procesarEquipo(partido_en_curso.equipoA, nuevoPartido.ganador === 'equipoA'),
+    procesarEquipo(partido_en_curso.equipoB, nuevoPartido.ganador === 'equipoB'),
     supabase.from('partido_en_curso').update({ datos: null }).eq('id', 1)
   ]);
 

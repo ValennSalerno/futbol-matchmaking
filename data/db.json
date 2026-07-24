@@ -7,9 +7,9 @@
       "velocidad": 7,
       "fisico": 7,
       "pase_salida": 6,
-      "partidos_jugados": 3,
-      "partidos_totales": 18,
-      "partidos_ganados": 2
+      "partidos_jugados": 4,
+      "partidos_totales": 19,
+      "partidos_ganados": 3
     },
     {
       "nombre": "Franco",
@@ -18,8 +18,8 @@
       "velocidad": 9,
       "fisico": 6,
       "pase_salida": 10,
-      "partidos_jugados": 0,
-      "partidos_totales": 13,
+      "partidos_jugados": 1,
+      "partidos_totales": 14,
       "partidos_ganados": 0
     },
     {
@@ -29,8 +29,8 @@
       "velocidad": 7,
       "fisico": 7,
       "pase_salida": 7,
-      "partidos_jugados": 1,
-      "partidos_totales": 19,
+      "partidos_jugados": 2,
+      "partidos_totales": 20,
       "partidos_ganados": 0
     },
     {
@@ -128,9 +128,9 @@
       "velocidad": 6,
       "fisico": 10,
       "pase_salida": 8,
-      "partidos_totales": 13,
-      "partidos_jugados": 2,
-      "partidos_ganados": 0
+      "partidos_totales": 14,
+      "partidos_jugados": 3,
+      "partidos_ganados": 1
     },
     {
       "nombre": "Gonzi",
@@ -161,9 +161,9 @@
       "velocidad": 8,
       "fisico": 7,
       "pase_salida": 10,
-      "partidos_jugados": 2,
-      "partidos_totales": 22,
-      "partidos_ganados": 1
+      "partidos_jugados": 3,
+      "partidos_totales": 23,
+      "partidos_ganados": 2
     },
     {
       "nombre": "Mati Bianchi",
@@ -172,9 +172,9 @@
       "velocidad": 8,
       "fisico": 8,
       "pase_salida": 6,
-      "partidos_jugados": 1,
-      "partidos_totales": 21,
-      "partidos_ganados": 1
+      "partidos_jugados": 2,
+      "partidos_totales": 22,
+      "partidos_ganados": 2
     },
     {
       "nombre": "Nahue",
@@ -183,8 +183,8 @@
       "velocidad": 5,
       "fisico": 5,
       "pase_salida": 5,
-      "partidos_jugados": 1,
-      "partidos_totales": 28,
+      "partidos_jugados": 2,
+      "partidos_totales": 29,
       "partidos_ganados": 1
     },
     {
@@ -194,9 +194,9 @@
       "velocidad": 7,
       "fisico": 7,
       "pase_salida": 7,
-      "partidos_jugados": 1,
-      "partidos_totales": 5,
-      "partidos_ganados": 1
+      "partidos_jugados": 2,
+      "partidos_totales": 6,
+      "partidos_ganados": 2
     },
     {
       "nombre": "Pitiki",
@@ -205,8 +205,8 @@
       "velocidad": 8,
       "fisico": 7,
       "pase_salida": 10,
-      "partidos_totales": 7,
-      "partidos_jugados": 0,
+      "partidos_totales": 8,
+      "partidos_jugados": 1,
       "partidos_ganados": 0
     },
     {
@@ -227,9 +227,9 @@
       "velocidad": 6,
       "fisico": 7,
       "pase_salida": 7,
-      "partidos_totales": 4,
-      "partidos_jugados": 0,
-      "partidos_ganados": 0
+      "partidos_totales": 5,
+      "partidos_jugados": 1,
+      "partidos_ganados": 1
     },
     {
       "nombre": "Mati P",
