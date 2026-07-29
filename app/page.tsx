@@ -38,7 +38,13 @@ export default async function Home() {
       return winrateB - winrateA;
     });
 
-  const contadoresFormato: Record<number, number> = { 5: 7, 7: 27, 8: 0, 9: 0 };
+  const contadoresFormato: Record<number, number> = {
+    5: 7,
+    6: 0,
+    7: 27,
+    8: 0,
+    9: 0,
+  };
   const contadoresMeses: Record<number, number> = {
     0: 6,
     1: 4,
@@ -306,7 +312,7 @@ export default async function Home() {
               <CardContent className="p-0">
                 <Table>
                   <TableBody>
-                    {[7, 5, 8, 9].map(
+                    {[7, 5, 6, 8, 9].map(
                       (formato) =>
                         contadoresFormato[formato] > 0 && (
                           <TableRow
