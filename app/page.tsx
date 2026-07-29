@@ -124,6 +124,45 @@ export default async function Home() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {/* NUEVA SECCIÓN: Listado de Equipos */}
+                <div className="flex justify-between bg-slate-950/50 rounded-lg p-3 mb-4 border border-slate-800 text-xs shadow-inner">
+                  <div className="flex flex-col w-1/2 pr-2 border-r border-slate-800/80 space-y-1.5">
+                    <span className="font-black text-cyan-500 border-b border-cyan-900/50 pb-1 mb-1">
+                      EQUIPO A
+                    </span>
+                    {(
+                      partido_en_curso?.datos?.equipoA ||
+                      partido_en_curso?.equipoA ||
+                      []
+                    ).map((j: string | { nombre: string }, i: number) => (
+                      <span
+                        key={`A-${i}`}
+                        className="text-cyan-100/80 font-medium truncate"
+                      >
+                        {typeof j === "string" ? j : j.nombre}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex flex-col w-1/2 pl-2 text-right space-y-1.5">
+                    <span className="font-black text-emerald-500 border-b border-emerald-900/50 pb-1 mb-1">
+                      EQUIPO B
+                    </span>
+                    {(
+                      partido_en_curso?.datos?.equipoB ||
+                      partido_en_curso?.equipoB ||
+                      []
+                    ).map((j: string | { nombre: string }, i: number) => (
+                      <span
+                        key={`B-${i}`}
+                        className="text-emerald-100/80 font-medium truncate"
+                      >
+                        {typeof j === "string" ? j : j.nombre}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* BOTONES DE SELECCIÓN */}
                 <form
                   action={resolverPartido}
                   className="grid grid-cols-2 gap-2"
@@ -132,23 +171,17 @@ export default async function Home() {
                     type="submit"
                     name="ganador"
                     value="equipoA"
-                    className="bg-cyan-900/40 hover:bg-cyan-700 border border-cyan-800 text-cyan-100 font-bold py-2 rounded-lg transition-colors text-sm"
+                    className="bg-cyan-900/40 hover:bg-cyan-700 border border-cyan-800 text-cyan-100 font-bold py-2 rounded-lg transition-colors text-sm truncate px-1"
                   >
-                    Gana{" "}
-                    {partido_en_curso?.datos?.equipoA?.[0] ||
-                      partido_en_curso?.equipoA?.[0] ||
-                      "A"}
+                    Gana A
                   </button>
                   <button
                     type="submit"
                     name="ganador"
                     value="equipoB"
-                    className="bg-emerald-900/40 hover:bg-emerald-700 border border-emerald-800 text-emerald-100 font-bold py-2 rounded-lg transition-colors text-sm"
+                    className="bg-emerald-900/40 hover:bg-emerald-700 border border-emerald-800 text-emerald-100 font-bold py-2 rounded-lg transition-colors text-sm truncate px-1"
                   >
-                    Gana{" "}
-                    {partido_en_curso?.datos?.equipoB?.[0] ||
-                      partido_en_curso?.equipoB?.[0] ||
-                      "B"}
+                    Gana B
                   </button>
                   <button
                     type="submit"
