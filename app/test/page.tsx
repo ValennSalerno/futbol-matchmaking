@@ -57,6 +57,29 @@ export default async function TestPage() {
             </CardContent>
           </Card>
 
+          {/* Tarjeta de Backup */}
+          <Card className="bg-slate-900 border-slate-800 border-l-4 border-l-blue-500">
+            <CardHeader>
+              <CardTitle className="text-slate-200">
+                Seguridad y Respaldo
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-slate-400">
+                Descarga una copia exacta y en tiempo real de toda la base de
+                datos en formato JSON. Ideal para resguardar antes de jugar.
+              </p>
+
+              <a
+                href="/api/backup"
+                download
+                className="block text-center w-full bg-blue-900/50 hover:bg-blue-900 text-blue-200 font-bold py-2 px-4 rounded-lg transition-colors border border-blue-800"
+              >
+                💾 Descargar Backup Completo
+              </a>
+            </CardContent>
+          </Card>
+
           {/* Tarjeta de Control de Matchmaking */}
           <Card className="bg-slate-900 border-slate-800 border-l-4 border-l-yellow-500">
             <CardHeader>

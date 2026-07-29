@@ -56,10 +56,20 @@ export async function guardarSorteo(formData: FormData) {
     fecha_sorteo: new Date().toISOString()
   };
 
-  // Guardamos el partido en curso en la fila 1
-  await supabase
+  // Guardado Atómico: Solo se guarda si "datos" está vacío (null)
+  const { data, error } = await supabase
     .from('partido_en_curso')
-    .upsert({ id: 1, datos: partidoEnCurso });
+    .update({ datos: partidoEnCurso })
+    .eq('id', 1)
+    .is('datos', null)
+    .select();
+
+  // Si alguien más guardó una fracción de segundo antes, 'datos' ya no será null
+  // y Supabase nos devolverá un array vacío (length === 0).
+  if (error || !data || data.length === 0) {
+    console.error("Colisión: Otro usuario ya inició un draft.");
+    redirect('/'); 
+  }
 
   revalidatePath('/'); 
   redirect('/'); 
