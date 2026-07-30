@@ -22,7 +22,12 @@ export default async function Home() {
   const totalPartidos = 34 + (partidos?.length || 0);
   const ultimoPartido =
     partidos?.length > 0
-      ? new Date(partidos[partidos.length - 1].fecha).toLocaleDateString()
+      ? new Date(partidos[partidos.length - 1].fecha).toLocaleDateString(
+          "es-AR",
+          {
+            timeZone: "America/Argentina/Buenos_Aires",
+          },
+        )
       : "18/7/2026";
 
   const todosLosJugadores = [...(jugadores_campo || []), ...(arqueros || [])]
@@ -82,6 +87,17 @@ export default async function Home() {
     "Octubre",
     "Noviembre",
     "Diciembre",
+  ];
+
+  const sanciones = [
+    { cant: 5, nombre: "Dylan", motivo: "No jugó en al menos 5 meses" },
+    { cant: 5, nombre: "Cris", motivo: "No jugó en al menos 5 meses" },
+    { cant: 4, nombre: "Peluque", motivo: "No jugó en al menos 4 meses" },
+    { cant: 3, nombre: "Gonzi", motivo: "No jugó en al menos 3 meses" },
+    { cant: 2, nombre: "Ari", motivo: "No jugó en al menos 2 meses" },
+    { cant: 1, nombre: "Chino", motivo: "Bajarse del partido 3 hs antes" },
+    { cant: 1, nombre: "Fran", motivo: "Estuvo 1 mes sin jugar" },
+    { cant: 1, nombre: "Mati P", motivo: "Estuvo 1 mes sin jugar" },
   ];
 
   return (
@@ -361,6 +377,48 @@ export default async function Home() {
                           </TableRow>
                         ),
                     )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+            <Card className="bg-slate-900 border-slate-800 border-l-4 border-l-red-600 shadow-lg">
+              <CardHeader className="bg-slate-950/40 border-b border-slate-800 py-4">
+                <CardTitle className="text-xs font-black text-red-500 uppercase tracking-wider text-center flex items-center justify-center gap-2">
+                  <span>🚨</span> Sanciones
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-slate-800 hover:bg-transparent bg-slate-900/20">
+                      <TableHead className="text-slate-400 font-bold text-center w-16">
+                        Cant.
+                      </TableHead>
+                      <TableHead className="text-slate-400 font-bold">
+                        Cruz
+                      </TableHead>
+                      <TableHead className="text-right text-slate-400 font-bold">
+                        Motivo
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sanciones.map((sancion, index) => (
+                      <TableRow
+                        key={index}
+                        className="border-slate-800 hover:bg-red-900/20 transition-colors"
+                      >
+                        <TableCell className="font-black text-red-400 text-center text-base">
+                          {sancion.cant}
+                        </TableCell>
+                        <TableCell className="font-bold text-slate-200">
+                          {sancion.nombre}
+                        </TableCell>
+                        <TableCell className="text-right font-medium text-slate-400 text-xs">
+                          {sancion.motivo}
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </CardContent>
