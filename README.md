@@ -1,3 +1,8 @@
+App para sorteo de equipo de amigos y tabla de participaciones
+
+
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
