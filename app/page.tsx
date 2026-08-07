@@ -5,6 +5,7 @@ import { getDbData, resolverPartido } from "./actions";
 import Link from "next/link";
 import PlayerCardModal from "@/components/ui/PlayerCardModal";
 import ClickableRow from "@/components/ui/ClickableRow";
+import ConfirmForm from "@/components/ui/ConfirmForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -185,7 +186,7 @@ export default async function Home() {
                 </div>
 
                 {/* BOTONES DE SELECCIÓN */}
-                <form
+                <ConfirmForm
                   action={resolverPartido}
                   className="grid grid-cols-2 gap-2"
                 >
@@ -213,7 +214,7 @@ export default async function Home() {
                   >
                     Empate
                   </button>
-                </form>
+                </ConfirmForm>
               </CardContent>
             </Card>
           ) : (
