@@ -4,6 +4,7 @@ export const revalidate = 0;
 import { getDbData, cancelarPartidoEnCurso } from "../actions";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import IqDebugger from "@/components/ui/IqDebugger";
 
 export default async function TestPage() {
   const db = await getDbData();
@@ -132,6 +133,7 @@ export default async function TestPage() {
             </pre>
           </CardContent>
         </Card>
+        <IqDebugger />
       </div>
     </main>
   );
