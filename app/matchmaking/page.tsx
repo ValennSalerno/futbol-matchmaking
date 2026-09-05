@@ -10,6 +10,13 @@ import Link from "next/link";
 type Invitado = { nombre: string; rating: number };
 type JugadorEquipo = JugadorCampo | Arquero;
 
+// Helper para saber quién tiene permiso de iniciar un intercambio
+const esIntercambiable = (nombre: string) => {
+  return (
+    nombre.includes("(Inv)") || nombre === "Junco" || nombre === "Junquito"
+  );
+};
+
 export default function Matchmaking() {
   const [db, setDb] = useState<{
     jugadores_campo: JugadorCampo[];
@@ -26,6 +33,12 @@ export default function Matchmaking() {
     equipoB: JugadorEquipo[];
   } | null>(null);
 
+  // NUEVO ESTADO: Guarda quién está seleccionado para hacer el swap
+  const [seleccionSwap, setSeleccionSwap] = useState<{
+    nombre: string;
+    equipo: "equipoA" | "equipoB";
+  } | null>(null);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -34,7 +47,6 @@ export default function Matchmaking() {
 
   useEffect(() => {
     getDbData().then((data) => {
-      // Si ya hay un partido, lo pateamos al Home
       if (data.partido_en_curso) {
         router.push("/");
         return;
@@ -81,7 +93,6 @@ export default function Matchmaking() {
     );
     const arq = db.arqueros.filter((a) => seleccionados.includes(a.nombre));
 
-    // Convertimos a los invitados en jugadores compatibles con el algoritmo
     const falsosJugadoresCampo: JugadorCampo[] = invitados.map((inv) => ({
       nombre: inv.nombre,
       tiro_al_arco: inv.rating,
@@ -95,6 +106,62 @@ export default function Matchmaking() {
     }));
 
     setEquipos(generarEquipos([...jugCampo, ...falsosJugadoresCampo], arq));
+    setSeleccionSwap(null); // Resetea el swap si vuelven a sortear
+  };
+
+  // NUEVA FUNCIÓN: Lógica del Click to Swap
+  const handleJugadorClick = (
+    nombre: string,
+    equipoDestino: "equipoA" | "equipoB",
+  ) => {
+    // 1. Si no hay nadie seleccionado, intentamos seleccionar
+    if (!seleccionSwap) {
+      if (esIntercambiable(nombre)) {
+        setSeleccionSwap({ nombre, equipo: equipoDestino });
+      }
+      return;
+    }
+
+    // 2. Si tocamos al mismo jugador, lo deseleccionamos (cancelar acción)
+    if (seleccionSwap.nombre === nombre) {
+      setSeleccionSwap(null);
+      return;
+    }
+
+    // 3. Si tocamos a otro jugador del mismo equipo
+    if (seleccionSwap.equipo === equipoDestino) {
+      if (esIntercambiable(nombre)) {
+        setSeleccionSwap({ nombre, equipo: equipoDestino }); // Cambiamos la selección al nuevo
+      } else {
+        setSeleccionSwap(null); // Cancelamos si no es intercambiable
+      }
+      return;
+    }
+
+    // 4. SI LLEGAMOS ACÁ: Hay alguien seleccionado, y tocamos a alguien del OTRO equipo. ¡SWAP!
+    setEquipos((prev) => {
+      if (!prev) return prev;
+
+      const equipoOrigen = seleccionSwap.equipo;
+      const j1 = prev[equipoOrigen].find(
+        (j) => j.nombre === seleccionSwap.nombre,
+      )!;
+      const j2 = prev[equipoDestino].find((j) => j.nombre === nombre)!;
+
+      const nuevosEquipos = { ...prev };
+
+      // Inyectamos el Jugador 2 en el array del Origen, y el Jugador 1 en el Destino
+      nuevosEquipos[equipoOrigen] = prev[equipoOrigen].map((j) =>
+        j.nombre === j1.nombre ? j2 : j,
+      );
+      nuevosEquipos[equipoDestino] = prev[equipoDestino].map((j) =>
+        j.nombre === j2.nombre ? j1 : j,
+      );
+
+      return nuevosEquipos;
+    });
+
+    setSeleccionSwap(null); // Limpiamos la selección tras el éxito
   };
 
   return (
@@ -227,6 +294,13 @@ export default function Matchmaking() {
         </div>
       ) : (
         <div className="space-y-6">
+          {/* Instrucciones visuales para el usuario */}
+          <div className="text-center text-slate-400 text-sm font-medium animate-pulse">
+            {seleccionSwap
+              ? "👉 Selecciona a un jugador del otro equipo para intercambiarlo"
+              : "💡 Tip: Toca a un Invitado o Arquero para intercambiarlo de equipo"}
+          </div>
+
           <form action={guardarSorteo} className="space-y-6">
             <input
               type="hidden"
@@ -248,14 +322,36 @@ export default function Matchmaking() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {equipos.equipoA.map((j) => (
-                      <li
-                        key={j.nombre}
-                        className="text-slate-200 font-medium text-center"
-                      >
-                        {j.nombre}
-                      </li>
-                    ))}
+                    {equipos.equipoA.map((j) => {
+                      const intercambiable = esIntercambiable(j.nombre);
+                      const seleccionado = seleccionSwap?.nombre === j.nombre;
+                      const puedeRecibir =
+                        seleccionSwap && seleccionSwap.equipo !== "equipoA";
+
+                      return (
+                        <li
+                          key={j.nombre}
+                          onClick={() =>
+                            handleJugadorClick(j.nombre, "equipoA")
+                          }
+                          className={`
+                            p-2 rounded-lg font-medium text-center transition-all cursor-pointer border-2
+                            ${seleccionado ? "bg-yellow-500/20 border-yellow-500 text-yellow-300 scale-105" : "border-transparent text-slate-200"}
+                            ${!seleccionado && intercambiable && !seleccionSwap ? "hover:bg-slate-800 hover:border-slate-700" : ""}
+                            ${puedeRecibir ? "hover:bg-yellow-500/10 hover:border-yellow-500/50" : ""}
+                          `}
+                        >
+                          {j.nombre}{" "}
+                          {intercambiable &&
+                            !seleccionado &&
+                            !seleccionSwap && (
+                              <span className="opacity-50 text-xs ml-1">
+                                🔄
+                              </span>
+                            )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </CardContent>
               </Card>
@@ -268,14 +364,36 @@ export default function Matchmaking() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {equipos.equipoB.map((j) => (
-                      <li
-                        key={j.nombre}
-                        className="text-slate-200 font-medium text-center"
-                      >
-                        {j.nombre}
-                      </li>
-                    ))}
+                    {equipos.equipoB.map((j) => {
+                      const intercambiable = esIntercambiable(j.nombre);
+                      const seleccionado = seleccionSwap?.nombre === j.nombre;
+                      const puedeRecibir =
+                        seleccionSwap && seleccionSwap.equipo !== "equipoB";
+
+                      return (
+                        <li
+                          key={j.nombre}
+                          onClick={() =>
+                            handleJugadorClick(j.nombre, "equipoB")
+                          }
+                          className={`
+                            p-2 rounded-lg font-medium text-center transition-all cursor-pointer border-2
+                            ${seleccionado ? "bg-yellow-500/20 border-yellow-500 text-yellow-300 scale-105" : "border-transparent text-slate-200"}
+                            ${!seleccionado && intercambiable && !seleccionSwap ? "hover:bg-slate-800 hover:border-slate-700" : ""}
+                            ${puedeRecibir ? "hover:bg-yellow-500/10 hover:border-yellow-500/50" : ""}
+                          `}
+                        >
+                          {j.nombre}{" "}
+                          {intercambiable &&
+                            !seleccionado &&
+                            !seleccionSwap && (
+                              <span className="opacity-50 text-xs ml-1">
+                                🔄
+                              </span>
+                            )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </CardContent>
               </Card>
@@ -290,7 +408,10 @@ export default function Matchmaking() {
           </form>
 
           <button
-            onClick={() => setEquipos(null)}
+            onClick={() => {
+              setEquipos(null);
+              setSeleccionSwap(null);
+            }}
             className="w-full text-slate-400 hover:text-white font-medium p-3"
           >
             Descartar y volver a sortear
