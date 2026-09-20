@@ -21,14 +21,20 @@ export default async function Home() {
   const { partidos, jugadores_campo, arqueros, partido_en_curso } = db;
 
   const totalPartidos = 34 + (partidos?.length || 0);
+  const partidosOrdenados =
+    partidos
+      ?.slice()
+      .sort(
+        (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
+      ) || [];
+
   const ultimoPartido =
-    partidos?.length > 0
-      ? new Date(partidos[partidos.length - 1].fecha).toLocaleDateString(
-          "es-AR",
-          {
-            timeZone: "America/Argentina/Buenos_Aires",
-          },
-        )
+    partidosOrdenados.length > 0
+      ? new Date(
+          partidosOrdenados[partidosOrdenados.length - 1].fecha,
+        ).toLocaleDateString("es-AR", {
+          timeZone: "America/Argentina/Buenos_Aires",
+        })
       : "18/7/2026";
 
   const todosLosJugadores = [...(jugadores_campo || []), ...(arqueros || [])]
