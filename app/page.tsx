@@ -97,14 +97,15 @@ export default async function Home() {
   ];
 
   const sanciones = [
-    { cant: 6, nombre: "Cris", motivo: "No jugó en al menos 6 meses" },
-    { cant: 5, nombre: "Peluque", motivo: "No jugó en al menos 5 meses" },
-    { cant: 5, nombre: "Dylan", motivo: "No jugó en al menos 5 meses" },
+    { cant: 7, nombre: "Cris", motivo: "No jugó en al menos 6 meses" },
+    { cant: 6, nombre: "Peluque", motivo: "No jugó en al menos 5 meses" },
+    { cant: 6, nombre: "Dylan", motivo: "No jugó en al menos 5 meses" },
     { cant: 3, nombre: "Gonzi", motivo: "No jugó en al menos 3 meses" },
     { cant: 2, nombre: "Ari", motivo: "No jugó en al menos 2 meses" },
     { cant: 1, nombre: "Chino", motivo: "Bajarse del partido 3 hs antes" },
     { cant: 1, nombre: "Fran", motivo: "Estuvo 1 mes sin jugar" },
     { cant: 1, nombre: "Mati P", motivo: "Estuvo 1 mes sin jugar" },
+    { cant: 1, nombre: "Junquito", motivo: "Estuvo 1 mes sin jugar" },
   ];
 
   return (
