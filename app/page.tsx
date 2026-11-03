@@ -99,7 +99,7 @@ export default async function Home() {
   const sanciones = [
     { cant: 8, nombre: "Cris", motivo: "No jugó en al menos 8 meses" },
     { cant: 7, nombre: "Peluque", motivo: "No jugó en al menos 7 meses" },
-    { cant: 7 nombre: "Dylan", motivo: "No jugó en al menos 7 meses" },
+    { cant: 7, nombre: "Dylan", motivo: "No jugó en al menos 7 meses" },
     { cant: 4, nombre: "Gonzi", motivo: "No jugó en al menos 4 meses" },
     { cant: 2, nombre: "Ari", motivo: "No jugó en al menos 2 meses" },
     { cant: 2, nombre: "Mati P", motivo: "Estuvo 2 mes sin jugar" },
