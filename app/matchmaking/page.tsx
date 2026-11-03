@@ -3,19 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { generarEquipos, JugadorCampo, Arquero } from "@/lib/matchmaking";
+import { getPlayerStatsAndTier, JugadorStatsDB } from "@/lib/playerStats";
 import { getDbData, guardarSorteo } from "../actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 
 type Invitado = { nombre: string; rating: number };
 type JugadorEquipo = JugadorCampo | Arquero;
-
-// Helper para saber quién tiene permiso de iniciar un intercambio
-const esIntercambiable = (nombre: string) => {
-  return (
-    nombre.includes("(Inv)") || nombre === "Junco" || nombre === "Junquito"
-  );
-};
 
 export default function Matchmaking() {
   const [db, setDb] = useState<{
@@ -33,17 +27,12 @@ export default function Matchmaking() {
     equipoB: JugadorEquipo[];
   } | null>(null);
 
-  // NUEVO ESTADO: Guarda quién está seleccionado para hacer el swap
   const [seleccionSwap, setSeleccionSwap] = useState<{
     nombre: string;
     equipo: "equipoA" | "equipoB";
   } | null>(null);
 
   const router = useRouter();
-
-  useEffect(() => {
-    getDbData().then(setDb);
-  }, []);
 
   useEffect(() => {
     getDbData().then((data) => {
@@ -106,39 +95,29 @@ export default function Matchmaking() {
     }));
 
     setEquipos(generarEquipos([...jugCampo, ...falsosJugadoresCampo], arq));
-    setSeleccionSwap(null); // Resetea el swap si vuelven a sortear
+    setSeleccionSwap(null);
   };
 
-  // NUEVA FUNCIÓN: Lógica del Click to Swap
+  // Permite intercambiar jugadores tocando uno del Equipo A y otro del Equipo B
   const handleJugadorClick = (
     nombre: string,
     equipoDestino: "equipoA" | "equipoB",
   ) => {
-    // 1. Si no hay nadie seleccionado, intentamos seleccionar
     if (!seleccionSwap) {
-      if (esIntercambiable(nombre)) {
-        setSeleccionSwap({ nombre, equipo: equipoDestino });
-      }
+      setSeleccionSwap({ nombre, equipo: equipoDestino });
       return;
     }
 
-    // 2. Si tocamos al mismo jugador, lo deseleccionamos (cancelar acción)
     if (seleccionSwap.nombre === nombre) {
       setSeleccionSwap(null);
       return;
     }
 
-    // 3. Si tocamos a otro jugador del mismo equipo
     if (seleccionSwap.equipo === equipoDestino) {
-      if (esIntercambiable(nombre)) {
-        setSeleccionSwap({ nombre, equipo: equipoDestino }); // Cambiamos la selección al nuevo
-      } else {
-        setSeleccionSwap(null); // Cancelamos si no es intercambiable
-      }
+      setSeleccionSwap({ nombre, equipo: equipoDestino });
       return;
     }
 
-    // 4. SI LLEGAMOS ACÁ: Hay alguien seleccionado, y tocamos a alguien del OTRO equipo. ¡SWAP!
     setEquipos((prev) => {
       if (!prev) return prev;
 
@@ -149,8 +128,6 @@ export default function Matchmaking() {
       const j2 = prev[equipoDestino].find((j) => j.nombre === nombre)!;
 
       const nuevosEquipos = { ...prev };
-
-      // Inyectamos el Jugador 2 en el array del Origen, y el Jugador 1 en el Destino
       nuevosEquipos[equipoOrigen] = prev[equipoOrigen].map((j) =>
         j.nombre === j1.nombre ? j2 : j,
       );
@@ -161,53 +138,76 @@ export default function Matchmaking() {
       return nuevosEquipos;
     });
 
-    setSeleccionSwap(null); // Limpiamos la selección tras el éxito
+    setSeleccionSwap(null);
   };
 
+  // Cálculo de medias OVR para la barra de balance de cancha
+  const getTeamAvgOvr = (team: JugadorEquipo[]) => {
+    if (!team.length) return 0;
+    const sum = team.reduce((acc, j) => {
+      const info = getPlayerStatsAndTier(j as JugadorStatsDB);
+      return acc + info.ovr;
+    }, 0);
+    return sum / team.length;
+  };
+
+  const avgA = equipos ? getTeamAvgOvr(equipos.equipoA) : 0;
+  const avgB = equipos ? getTeamAvgOvr(equipos.equipoB) : 0;
+  const diff = Math.abs(avgA - avgB);
+  const parity = Math.max(60, Math.round(100 - diff * 4));
+
   return (
-    <main className="p-8 max-w-4xl mx-auto space-y-8 min-h-screen selection:bg-emerald-500/30">
-      <div className="flex items-center justify-between">
-        <h1 className="text-4xl font-black pb-2 tracking-tight text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-cyan-400">
-          Draft de Jugadores
-        </h1>
+    <main className="p-4 md:p-8 max-w-6xl mx-auto space-y-8 min-h-screen bg-[#080C14] text-slate-100 selection:bg-[#00E676] selection:text-slate-950">
+      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-widest text-[#00E676]">
+            Matchmaking & Cancha 2D
+          </span>
+          <h1 className="font-sport text-3xl md:text-4xl font-bold tracking-wide text-white">
+            ARMADOR DE <span className="text-[#00E676]">EQUIPOS</span>
+          </h1>
+        </div>
         <Link
           href="/"
-          className="text-slate-400 hover:text-white font-medium transition-colors"
+          className="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-colors"
         >
-          &larr; Volver
+          &larr; Volver al Inicio
         </Link>
       </div>
 
       {!equipos ? (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-[#0E1422] border-slate-800">
               <CardHeader>
-                <CardTitle className="text-slate-200">
-                  Plantel Oficial
+                <CardTitle className="text-slate-200 text-base">
+                  Plantel Oficial ({jugadoresDisponibles.length} disponibles)
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <select
-                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 rounded-lg p-3 outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 rounded-xl p-3 outline-none focus:border-[#00E676] transition-colors"
                   onChange={(e) => agregarJugador(e.target.value)}
                   value=""
                 >
                   <option value="" disabled>
-                    Añadir jugador de Taquito
+                    Seleccionar jugador de Taquito...
                   </option>
-                  {jugadoresDisponibles.map((j) => (
-                    <option key={j.nombre} value={j.nombre}>
-                      {j.nombre}
-                    </option>
-                  ))}
+                  {jugadoresDisponibles.map((j) => {
+                    const info = getPlayerStatsAndTier(j as JugadorStatsDB);
+                    return (
+                      <option key={j.nombre} value={j.nombre}>
+                        {j.nombre} ({info.ovr} OVR • {info.posLabel})
+                      </option>
+                    );
+                  })}
                 </select>
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-[#0E1422] border-slate-800">
               <CardHeader>
-                <CardTitle className="text-slate-200">
+                <CardTitle className="text-slate-200 text-base">
                   Añadir Invitado
                 </CardTitle>
               </CardHeader>
@@ -216,7 +216,7 @@ export default function Matchmaking() {
                   placeholder="Nombre"
                   value={nombreInvitado}
                   onChange={(e) => setNombreInvitado(e.target.value)}
-                  className="w-1/2 bg-slate-950 border border-slate-800 text-slate-200 p-3 rounded-lg outline-none focus:border-emerald-500"
+                  className="w-1/2 bg-slate-950 border border-slate-800 text-slate-200 p-3 rounded-xl outline-none focus:border-[#00E676]"
                 />
                 <input
                   type="number"
@@ -229,11 +229,12 @@ export default function Matchmaking() {
                       e.target.value === "" ? "" : Number(e.target.value),
                     )
                   }
-                  className="w-1/3 bg-slate-950 border border-slate-800 text-slate-200 p-3 rounded-lg outline-none focus:border-emerald-500"
+                  className="w-1/3 bg-slate-950 border border-slate-800 text-slate-200 p-3 rounded-xl outline-none focus:border-[#00E676]"
                 />
                 <button
+                  type="button"
                   onClick={agregarInvitado}
-                  className="w-1/4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg"
+                  className="w-1/4 bg-[#00E676] hover:brightness-110 text-slate-950 font-bold rounded-xl cursor-pointer"
                 >
                   +
                 </button>
@@ -241,41 +242,65 @@ export default function Matchmaking() {
             </Card>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-            <h3 className="text-slate-400 font-bold mb-4">
-              Convocados: {totalJugadores}
+          <div className="bg-[#0E1422] border border-slate-800 rounded-2xl p-4">
+            <h3 className="text-slate-300 font-bold mb-4 text-sm">
+              Convocados actuales:{" "}
+              <span className="font-sport text-lg text-[#00E676]">
+                {totalJugadores}
+              </span>
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {seleccionados.map((nombre) => (
-                <div
-                  key={nombre}
-                  className="bg-slate-800 rounded-lg p-3 flex justify-between items-center border border-slate-700"
-                >
-                  <span className="font-bold text-slate-200">{nombre}</span>
-                  <button
-                    onClick={() => quitarJugador(nombre)}
-                    className="text-slate-500 hover:text-red-400 transition-colors font-black"
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {seleccionados.map((nombre) => {
+                const jugObj = todosLosJugadores.find(
+                  (j) => j.nombre === nombre,
+                );
+                const info = jugObj
+                  ? getPlayerStatsAndTier(jugObj as JugadorStatsDB)
+                  : null;
+                return (
+                  <div
+                    key={nombre}
+                    className="bg-slate-900 rounded-xl p-3 flex justify-between items-center border border-slate-800"
                   >
-                    X
-                  </button>
-                </div>
-              ))}
+                    <div>
+                      <span className="font-bold text-slate-100 block text-sm">
+                        {nombre}
+                      </span>
+                      {info && (
+                        <span className="text-[11px] text-slate-400">
+                          {info.ovr} OVR • {info.posLabel}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => quitarJugador(nombre)}
+                      className="text-slate-500 hover:text-rose-400 transition-colors font-black px-1.5 cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
               {invitados.map((inv) => (
                 <div
                   key={inv.nombre}
-                  className="bg-emerald-900/20 rounded-lg p-3 flex justify-between items-center border border-emerald-500/30"
+                  className="bg-emerald-950/30 rounded-xl p-3 flex justify-between items-center border border-emerald-500/30"
                 >
-                  <span className="font-bold text-emerald-400">
-                    {inv.nombre}{" "}
-                    <span className="text-xs opacity-50 ml-1">
-                      Lvl.{inv.rating}
+                  <div>
+                    <span className="font-bold text-[#00E676] block text-sm">
+                      {inv.nombre}
                     </span>
-                  </span>
+                    <span className="text-[11px] text-emerald-300/70">
+                      Nivel {inv.rating} ({inv.rating * 10} OVR)
+                    </span>
+                  </div>
                   <button
+                    type="button"
                     onClick={() => quitarInvitado(inv.nombre)}
-                    className="text-slate-500 hover:text-red-400 transition-colors font-black"
+                    className="text-slate-500 hover:text-rose-400 transition-colors font-black px-1.5 cursor-pointer"
                   >
-                    X
+                    ✕
                   </button>
                 </div>
               ))}
@@ -283,22 +308,72 @@ export default function Matchmaking() {
           </div>
 
           <button
+            type="button"
             onClick={armarEquipos}
             disabled={!esCantidadValida}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl p-4 transition-all disabled:opacity-50 disabled:hover:bg-emerald-500 mt-6"
+            className="w-full bg-[#00E676] hover:brightness-110 text-slate-950 font-black rounded-2xl p-4 transition-all disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(0,230,118,0.25)]"
           >
             {esCantidadValida
-              ? "Sortear Equipos 🎲"
-              : `Deben ser 10, 12, 14, 16 o 18 (Actual: ${totalJugadores})`}
+              ? "⚽ SORTEAR EQUIPOS EN CANCHA 2D 🎲"
+              : `Deben ser 10, 12, 14, 16 o 18 jugadores (Actual: ${totalJugadores})`}
           </button>
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Instrucciones visuales para el usuario */}
-          <div className="text-center text-slate-400 text-sm font-medium animate-pulse">
-            {seleccionSwap
-              ? "👉 Selecciona a un jugador del otro equipo para intercambiarlo"
-              : "💡 Tip: Toca a un Invitado o Arquero para intercambiarlo de equipo"}
+        /* VISTA DE CANCHA 2D LUEGO DEL SORTEO */
+        <div className="bg-[#0E1422] border border-slate-800 rounded-2xl p-5 space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-[#00E676]">
+                Formación en Cancha 2D
+              </span>
+              <h2 className="text-lg font-bold text-white mt-0.5">
+                Distribución de Equipos e Intercambio Táctil
+              </h2>
+            </div>
+          </div>
+
+          {/* Barra de Balance OVR */}
+          <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
+              <span className="text-[#00E676]">
+                EQUIPO A • Media:{" "}
+                <span className="font-sport text-base">{avgA.toFixed(1)}</span>{" "}
+                OVR
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                {diff <= 3
+                  ? `🔥 ${parity}% Parejo en Cancha`
+                  : `⚖️ Diferencia de ${diff.toFixed(1)} pts OVR`}
+              </span>
+              <span className="text-cyan-400">
+                EQUIPO B • Media:{" "}
+                <span className="font-sport text-base">{avgB.toFixed(1)}</span>{" "}
+                OVR
+              </span>
+            </div>
+            <div className="h-3 rounded-full bg-slate-800 overflow-hidden flex">
+              <div
+                className="bg-gradient-to-r from-emerald-500 to-[#00E676] transition-all duration-300"
+                style={{
+                  width: `${
+                    avgA + avgB > 0 ? (avgA / (avgA + avgB)) * 100 : 50
+                  }%`,
+                }}
+              ></div>
+              <div
+                className="bg-gradient-to-l from-cyan-500 to-sky-400 transition-all duration-300"
+                style={{
+                  width: `${
+                    avgA + avgB > 0 ? (avgB / (avgA + avgB)) * 100 : 50
+                  }%`,
+                }}
+              ></div>
+            </div>
+            <p className="text-[11px] text-slate-400 text-center">
+              {seleccionSwap
+                ? `👉 Seleccionaste a ${seleccionSwap.nombre}. Ahora tocá a un jugador del otro equipo para intercambiarlos.`
+                : "💡 Tocá cualquier jugador del Equipo A y otro del Equipo B para intercambiarlos de lado en la cancha."}
+            </p>
           </div>
 
           <form action={guardarSorteo} className="space-y-6">
@@ -313,108 +388,128 @@ export default function Matchmaking() {
               value={JSON.stringify(equipos.equipoB.map((j) => j.nombre))}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-slate-900 border-slate-800 shadow-xl border-t-4 border-t-cyan-500">
-                <CardHeader>
-                  <CardTitle className="text-center text-2xl font-black text-cyan-400">
-                    Equipo A
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {equipos.equipoA.map((j) => {
-                      const intercambiable = esIntercambiable(j.nombre);
-                      const seleccionado = seleccionSwap?.nombre === j.nombre;
-                      const puedeRecibir =
-                        seleccionSwap && seleccionSwap.equipo !== "equipoA";
+            {/* Cancha 2D (Lado A y Lado B) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Lado Equipo A */}
+              <div className="pitch-pattern rounded-2xl border-2 border-emerald-500/30 p-5 relative min-h-[320px] flex flex-col justify-between">
+                <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2">
+                  <span className="font-sport font-bold text-sm tracking-wider text-[#00E676]">
+                    ⚽ EQUIPO A (VERDE)
+                  </span>
+                  <span className="text-xs text-emerald-200/80">
+                    {equipos.equipoA.length} Jugadores
+                  </span>
+                </div>
 
-                      return (
-                        <li
-                          key={j.nombre}
-                          onClick={() =>
-                            handleJugadorClick(j.nombre, "equipoA")
-                          }
-                          className={`
-                            p-2 rounded-lg font-medium text-center transition-all cursor-pointer border-2
-                            ${seleccionado ? "bg-yellow-500/20 border-yellow-500 text-yellow-300 scale-105" : "border-transparent text-slate-200"}
-                            ${!seleccionado && intercambiable && !seleccionSwap ? "hover:bg-slate-800 hover:border-slate-700" : ""}
-                            ${puedeRecibir ? "hover:bg-yellow-500/10 hover:border-yellow-500/50" : ""}
-                          `}
-                        >
-                          {j.nombre}{" "}
-                          {intercambiable &&
-                            !seleccionado &&
-                            !seleccionSwap && (
-                              <span className="opacity-50 text-xs ml-1">
-                                🔄
-                              </span>
-                            )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </CardContent>
-              </Card>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 my-auto py-4">
+                  {equipos.equipoA.map((j) => {
+                    const info = getPlayerStatsAndTier(j as JugadorStatsDB);
+                    const isSelected = seleccionSwap?.nombre === j.nombre;
+                    const canReceive =
+                      seleccionSwap && seleccionSwap.equipo !== "equipoA";
 
-              <Card className="bg-slate-900 border-slate-800 shadow-xl border-t-4 border-t-emerald-500">
-                <CardHeader>
-                  <CardTitle className="text-center text-2xl font-black text-emerald-400">
-                    Equipo B
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {equipos.equipoB.map((j) => {
-                      const intercambiable = esIntercambiable(j.nombre);
-                      const seleccionado = seleccionSwap?.nombre === j.nombre;
-                      const puedeRecibir =
-                        seleccionSwap && seleccionSwap.equipo !== "equipoB";
+                    return (
+                      <button
+                        type="button"
+                        key={j.nombre}
+                        onClick={() => handleJugadorClick(j.nombre, "equipoA")}
+                        className={`p-3 rounded-xl border transition flex flex-col items-center text-center group cursor-pointer ${
+                          isSelected
+                            ? "ring-2 ring-[#00E676] bg-emerald-950/95 border-[#00E676] scale-105"
+                            : canReceive
+                              ? "bg-slate-900/90 border-yellow-400/50 hover:border-yellow-300"
+                              : "bg-slate-900/90 border-white/15 hover:bg-slate-800/90"
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-sport text-lg font-black text-[#00E676]">
+                            {info.ovr}
+                          </span>
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-white">
+                            {info.posLabel}
+                          </span>
+                        </div>
+                        <span className="text-xs font-bold text-white mt-1 group-hover:text-[#00E676] truncate max-w-full">
+                          {j.nombre}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          Prom. {info.avg10.toFixed(1)} • {info.winrate}% WR
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-                      return (
-                        <li
-                          key={j.nombre}
-                          onClick={() =>
-                            handleJugadorClick(j.nombre, "equipoB")
-                          }
-                          className={`
-                            p-2 rounded-lg font-medium text-center transition-all cursor-pointer border-2
-                            ${seleccionado ? "bg-yellow-500/20 border-yellow-500 text-yellow-300 scale-105" : "border-transparent text-slate-200"}
-                            ${!seleccionado && intercambiable && !seleccionSwap ? "hover:bg-slate-800 hover:border-slate-700" : ""}
-                            ${puedeRecibir ? "hover:bg-yellow-500/10 hover:border-yellow-500/50" : ""}
-                          `}
-                        >
-                          {j.nombre}{" "}
-                          {intercambiable &&
-                            !seleccionado &&
-                            !seleccionSwap && (
-                              <span className="opacity-50 text-xs ml-1">
-                                🔄
-                              </span>
-                            )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </CardContent>
-              </Card>
+              {/* Lado Equipo B */}
+              <div className="pitch-pattern rounded-2xl border-2 border-cyan-500/30 p-5 relative min-h-[320px] flex flex-col justify-between">
+                <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2">
+                  <span className="font-sport font-bold text-sm tracking-wider text-cyan-300">
+                    ⚽ EQUIPO B (AZUL)
+                  </span>
+                  <span className="text-xs text-cyan-200/80">
+                    {equipos.equipoB.length} Jugadores
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 my-auto py-4">
+                  {equipos.equipoB.map((j) => {
+                    const info = getPlayerStatsAndTier(j as JugadorStatsDB);
+                    const isSelected = seleccionSwap?.nombre === j.nombre;
+                    const canReceive =
+                      seleccionSwap && seleccionSwap.equipo !== "equipoB";
+
+                    return (
+                      <button
+                        type="button"
+                        key={j.nombre}
+                        onClick={() => handleJugadorClick(j.nombre, "equipoB")}
+                        className={`p-3 rounded-xl border transition flex flex-col items-center text-center group cursor-pointer ${
+                          isSelected
+                            ? "ring-2 ring-cyan-400 bg-cyan-950/95 border-cyan-400 scale-105"
+                            : canReceive
+                              ? "bg-slate-900/90 border-yellow-400/50 hover:border-yellow-300"
+                              : "bg-slate-900/90 border-white/15 hover:bg-slate-800/90"
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-sport text-lg font-black text-cyan-300">
+                            {info.ovr}
+                          </span>
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-white">
+                            {info.posLabel}
+                          </span>
+                        </div>
+                        <span className="text-xs font-bold text-white mt-1 group-hover:text-cyan-300 truncate max-w-full">
+                          {j.nombre}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          Prom. {info.avg10.toFixed(1)} • {info.winrate}% WR
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             <button
               type="submit"
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xl font-black rounded-xl p-4 transition-all"
+              className="w-full bg-[#00E676] hover:brightness-110 text-slate-950 text-lg font-black rounded-2xl p-4 transition-all cursor-pointer shadow-[0_0_20px_rgba(0,230,118,0.3)]"
             >
               Confirmar Equipos y Jugar ⚽
             </button>
           </form>
 
           <button
+            type="button"
             onClick={() => {
               setEquipos(null);
               setSeleccionSwap(null);
             }}
-            className="w-full text-slate-400 hover:text-white font-medium p-3"
+            className="w-full text-slate-400 hover:text-white text-sm font-medium p-2 cursor-pointer"
           >
-            Descartar y volver a sortear
+            &larr; Modificar lista de convocados
           </button>
         </div>
       )}

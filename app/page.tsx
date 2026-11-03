@@ -4,17 +4,9 @@ export const revalidate = 0;
 import { getDbData, resolverPartido } from "./actions";
 import Link from "next/link";
 import PlayerCardModal from "@/components/ui/PlayerCardModal";
-import ClickableRow from "@/components/ui/ClickableRow";
+import DashboardInteractive from "@/components/ui/DashboardInteractive";
 import ConfirmForm from "@/components/ui/ConfirmForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 export default async function Home() {
   const db = await getDbData();
@@ -37,7 +29,10 @@ export default async function Home() {
         })
       : "18/7/2026";
 
-  const todosLosJugadores = [...(jugadores_campo || []), ...(arqueros || [])]
+  const todosLosJugadores = [
+    ...(jugadores_campo || []),
+    ...(arqueros || []).map((a) => ({ ...a, esArquero: true })),
+  ]
     .filter((j) => j.partidos_totales > 0)
     .sort((a, b) => {
       if (b.partidos_totales !== a.partidos_totales) {
@@ -102,339 +97,280 @@ export default async function Home() {
     { cant: 7, nombre: "Dylan", motivo: "No jugó en al menos 7 meses" },
     { cant: 4, nombre: "Gonzi", motivo: "No jugó en al menos 4 meses" },
     { cant: 2, nombre: "Ari", motivo: "No jugó en al menos 2 meses" },
-    { cant: 2, nombre: "Mati P", motivo: "Estuvo 2 mes sin jugar" },
+    { cant: 2, nombre: "Mati P", motivo: "Estuvo 2 meses sin jugar" },
     { cant: 2, nombre: "Junquito", motivo: "Estuvo 2 meses sin jugar" },
     { cant: 1, nombre: "Chino", motivo: "Bajarse del partido 3 hs antes" },
     { cant: 1, nombre: "Fran", motivo: "Estuvo 1 mes sin jugar" },
   ];
 
   return (
-    <main className="min-h-screen bg-slate-950 p-4 md:p-8">
+    <main className="min-h-screen bg-[#080C14] text-slate-100 p-4 md:p-8 selection:bg-[#00E676] selection:text-slate-950">
       <div className="max-w-7xl mx-auto space-y-6">
-        <h1 className="text-4xl font-extrabold text-emerald-400 pb-2">
-          | Taquito FC
-        </h1>
+        {/* Modal de Carta FUT + Radar + Comparador 1v1 */}
+        <PlayerCardModal
+          jugadoresDb={todosLosJugadores}
+          totalPartidos={totalPartidos}
+        />
 
+        {/* Header Superior */}
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-1.5 rounded-full bg-[#00E676] shadow-[0_0_12px_#00E676]"></div>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h1 className="font-sport text-3xl font-bold tracking-wider text-white">
+                  TAQUITO <span className="text-[#00E676]">FC</span>
+                </h1>
+                <span className="text-[11px] font-semibold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30">
+                  Temporada 2026
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                Panel oficial de rendimiento, cartas FUT y Matchmaking
+                inteligente
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {/* Top KPI Cards + Acción de Partido */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-slate-900 border-slate-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Partidos Totales
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-black text-slate-100">
+          <div className="bg-[#0E1422] border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+              Partidos Totales
+            </span>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="font-sport text-4xl font-bold text-white">
                 {totalPartidos}
-              </div>
-            </CardContent>
-          </Card>
+              </span>
+              <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                Temporada 2026
+              </span>
+            </div>
+          </div>
 
-          <Card className="bg-slate-900 border-slate-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Último Partido
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-black text-emerald-500">
+          <div className="bg-[#0E1422] border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+              Último Encuentro
+            </span>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="font-sport text-2xl font-bold text-[#00E676]">
                 {ultimoPartido}
-              </div>
-            </CardContent>
-          </Card>
+              </span>
+              <span className="text-xs text-slate-400">Historial Oficial</span>
+            </div>
+          </div>
 
-          {partido_en_curso ? (
-            <Card className="bg-slate-900 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)] flex flex-col justify-center">
-              <CardHeader className="pb-2 pt-4">
-                <CardTitle className="text-xs font-bold text-emerald-400 uppercase tracking-wider text-center flex items-center justify-center gap-2">
-                  <span className="relative flex h-2 w-2">
+          <div className="bg-[#0E1422] border border-[#00E676]/40 rounded-2xl p-4 flex items-center justify-between gap-3">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-[#00E676]">
+                Próxima Fecha
+              </span>
+              <p className="text-sm font-semibold text-white mt-0.5">
+                {partido_en_curso
+                  ? `Partido en curso (Fútbol ${partido_en_curso.formato})`
+                  : "Armar equipos y ver cancha 2D"}
+              </p>
+            </div>
+            {!partido_en_curso && (
+              <Link
+                href="/matchmaking"
+                className="px-4 py-2.5 rounded-xl bg-[#00E676] text-slate-950 font-bold text-xs tracking-wide hover:brightness-110 transition shadow-[0_0_20px_rgba(0,230,118,0.3)] shrink-0"
+              >
+                ⚽ ARMAR EQUIPOS
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* Tarjeta de Partido en Curso (si existe un sorteo activo) */}
+        {partido_en_curso && (
+          <Card className="bg-[#0E1422] border-emerald-500/50 shadow-lg shadow-emerald-500/10">
+            <CardHeader className="bg-emerald-950/20 border-b border-slate-800 pb-4">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-[#00E676] text-lg flex items-center gap-2">
+                  <span className="relative flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                   </span>
-                  Partido en Curso
+                  Partido en curso (Fútbol {partido_en_curso.formato})
                 </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* NUEVA SECCIÓN: Listado de Equipos */}
-                <div className="flex justify-between bg-slate-950/50 rounded-lg p-3 mb-4 border border-slate-800 text-xs shadow-inner">
-                  <div className="flex flex-col w-1/2 pr-2 border-r border-slate-800/80 space-y-1.5">
-                    <span className="font-black text-cyan-500 border-b border-cyan-900/50 pb-1 mb-1">
-                      EQUIPO A
-                    </span>
-                    {(
-                      partido_en_curso?.datos?.equipoA ||
-                      partido_en_curso?.equipoA ||
-                      []
-                    ).map((j: string | { nombre: string }, i: number) => (
-                      <span
-                        key={`A-${i}`}
-                        className="text-cyan-100/80 font-medium truncate"
-                      >
-                        {typeof j === "string" ? j : j.nombre}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex flex-col w-1/2 pl-2 text-right space-y-1.5">
-                    <span className="font-black text-emerald-500 border-b border-emerald-900/50 pb-1 mb-1">
-                      EQUIPO B
-                    </span>
-                    {(
-                      partido_en_curso?.datos?.equipoB ||
-                      partido_en_curso?.equipoB ||
-                      []
-                    ).map((j: string | { nombre: string }, i: number) => (
-                      <span
-                        key={`B-${i}`}
-                        className="text-emerald-100/80 font-medium truncate"
-                      >
-                        {typeof j === "string" ? j : j.nombre}
-                      </span>
-                    ))}
-                  </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                  <span className="text-xs font-bold text-cyan-400 block mb-1">
+                    Equipo A
+                  </span>
+                  <p className="text-sm text-slate-300 font-medium">
+                    {partido_en_curso.equipoA.join(", ")}
+                  </p>
                 </div>
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                  <span className="text-xs font-bold text-[#00E676] block mb-1">
+                    Equipo B
+                  </span>
+                  <p className="text-sm text-slate-300 font-medium">
+                    {partido_en_curso.equipoB.join(", ")}
+                  </p>
+                </div>
+              </div>
 
-                {/* BOTONES DE SELECCIÓN */}
-                <ConfirmForm
-                  action={resolverPartido}
-                  className="grid grid-cols-2 gap-2"
-                >
+              <ConfirmForm action={resolverPartido}>
+                <input
+                  type="text"
+                  name="sede"
+                  placeholder="Sede (Ej: El Coloso)"
+                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded-lg text-sm mb-3 outline-none focus:border-[#00E676]"
+                  required
+                />
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   <button
                     type="submit"
                     name="ganador"
                     value="equipoA"
-                    className="bg-cyan-900/40 hover:bg-cyan-700 border border-cyan-800 text-cyan-100 font-bold py-2 rounded-lg transition-colors text-sm truncate px-1"
+                    className="bg-cyan-900/40 hover:bg-cyan-700 border border-cyan-800 text-cyan-100 font-bold py-2 rounded-lg transition-colors text-sm truncate px-1 cursor-pointer"
                   >
-                    Gana A
+                    Gana Equipo A
                   </button>
                   <button
                     type="submit"
                     name="ganador"
                     value="equipoB"
-                    className="bg-emerald-900/40 hover:bg-emerald-700 border border-emerald-800 text-emerald-100 font-bold py-2 rounded-lg transition-colors text-sm truncate px-1"
+                    className="bg-emerald-900/40 hover:bg-emerald-700 border border-emerald-800 text-emerald-100 font-bold py-2 rounded-lg transition-colors text-sm truncate px-1 cursor-pointer"
                   >
-                    Gana B
+                    Gana Equipo B
                   </button>
                   <button
                     type="submit"
                     name="ganador"
                     value="empate"
-                    className="col-span-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2 rounded-lg transition-colors text-sm mt-1"
+                    className="col-span-2 md:col-span-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2 rounded-lg transition-colors text-sm mt-1 md:mt-0 cursor-pointer"
                   >
                     Empate
                   </button>
-                </ConfirmForm>
-              </CardContent>
-            </Card>
-          ) : (
-            <Link
-              href="/matchmaking"
-              className="w-full h-full min-h-30 flex flex-col items-center justify-center bg-emerald-500 hover:bg-emerald-400 transition-all rounded-xl border border-emerald-400 font-bold text-slate-950 shadow-lg shadow-emerald-500/20"
-            >
-              <span className="text-2xl mb-1">⚽</span>
-              ARMAR EQUIPOS
-            </Link>
-          )}
-        </div>
+                </div>
+              </ConfirmForm>
+            </CardContent>
+          </Card>
+        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <Card className="bg-slate-900 border-slate-800 h-fit">
-              <CardHeader>
-                <CardTitle className="text-xl font-bold text-slate-100">
-                  Rendimiento y Asistencia
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-slate-800 hover:bg-transparent">
-                      <TableHead className="font-bold text-slate-400 w-16">
-                        Pos
-                      </TableHead>
-                      <TableHead className="font-bold text-slate-400">
-                        Jugador
-                      </TableHead>
-                      <TableHead className="font-bold text-slate-400 text-center">
-                        PJ
-                      </TableHead>
-                      <TableHead className="font-bold text-slate-400 text-center">
-                        % Asistencia
-                      </TableHead>
-                      <TableHead className="font-bold text-slate-400 text-center">
-                        Winrate
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {todosLosJugadores.map((j, index) => {
-                      const asistencia = Math.round(
-                        (j.partidos_totales / totalPartidos) * 100,
-                      );
-                      const winrate =
-                        j.partidos_jugados > 0
-                          ? Math.round(
-                              (j.partidos_ganados / j.partidos_jugados) * 100,
-                            )
+        {/* Dashboard Interactivo (Highlights + Tabla + Galería + Sidebar) */}
+        <DashboardInteractive
+          jugadores={todosLosJugadores}
+          totalPartidos={totalPartidos}
+          childrenSidebar={
+            <>
+              {/* Tarjeta 1: Formato Jugado */}
+              <div className="bg-[#0E1422] border border-slate-800/90 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                    Formato Jugado
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    {totalPartidos} totales
+                  </span>
+                </div>
+                <div className="space-y-2.5">
+                  {[7, 5, 6, 8, 9]
+                    .filter((fmt) => (contadoresFormato[fmt] || 0) > 0)
+                    .map((fmt) => {
+                      const cant = contadoresFormato[fmt] || 0;
+                      const pct =
+                        totalPartidos > 0
+                          ? Math.round((cant / totalPartidos) * 100)
                           : 0;
-
-                      const pos = index + 1;
-                      const isTop3 = pos <= 3;
-                      const isSudamericana = pos >= 4 && pos <= 10;
-                      const isDescenso = pos >= 21 && pos <= 25;
-
-                      let rowStyles = "border-slate-800 transition-colors ";
-                      if (isTop3 || isSudamericana)
-                        rowStyles += "bg-sky-900/20 hover:bg-sky-900/40";
-                      else if (isDescenso)
-                        rowStyles += "bg-red-900/20 hover:bg-red-900/40";
-                      else rowStyles += "hover:bg-slate-800/50";
-
                       return (
-                        <ClickableRow
-                          key={j.nombre}
-                          nombreJugador={j.nombre}
-                          className={rowStyles}
-                        >
-                          <TableCell
-                            className={`font-black ${isTop3 ? "text-emerald-400" : "text-slate-500"}`}
-                          >
-                            #{pos}
-                          </TableCell>
-                          <TableCell className="font-bold text-slate-200">
-                            {j.nombre}
-                          </TableCell>
-                          <TableCell className="text-center font-medium text-slate-300">
-                            {j.partidos_totales}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <span className="bg-slate-800 text-slate-300 py-1 px-2 rounded-md font-bold text-sm">
-                              {asistencia}%
+                        <div key={fmt}>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="font-semibold text-white">
+                              Fútbol {fmt}
                             </span>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <span
-                              className={`py-1 px-2 rounded-md font-bold text-sm ${winrate > 50 ? "text-emerald-400 bg-emerald-400/10" : winrate > 0 ? "text-yellow-400 bg-yellow-400/10" : "text-slate-500"}`}
-                            >
-                              {winrate}%
+                            <span className="text-[#00E676] font-bold">
+                              {cant} partidos ({pct}%)
                             </span>
-                          </TableCell>
-                        </ClickableRow>
+                          </div>
+                          <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                            <div
+                              className="h-full bg-[#00E676] rounded-full"
+                              style={{ width: `${pct}%` }}
+                            ></div>
+                          </div>
+                        </div>
                       );
                     })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
+                </div>
+              </div>
 
-          <div className="space-y-6">
-            <Card className="bg-slate-900 border-slate-800">
-              <CardHeader className="bg-slate-950/40 border-b border-slate-800 py-4">
-                <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center">
-                  Formato
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableBody>
-                    {[7, 5, 6, 8, 9].map(
-                      (formato) =>
-                        contadoresFormato[formato] > 0 && (
-                          <TableRow
-                            key={formato}
-                            className="border-slate-800 hover:bg-slate-800/50"
-                          >
-                            <TableCell className="font-bold text-slate-300">
-                              Fútbol {formato}
-                            </TableCell>
-                            <TableCell className="text-right font-bold text-emerald-400">
-                              {contadoresFormato[formato]}
-                            </TableCell>
-                          </TableRow>
-                        ),
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-900 border-slate-800">
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-slate-800 hover:bg-transparent bg-slate-900/20">
-                      <TableHead className="text-slate-400">Mes</TableHead>
-                      <TableHead className="text-right text-slate-400">
-                        Jugados
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {nombresMeses.map(
-                      (mes, index) =>
-                        contadoresMeses[index] > 0 && (
-                          <TableRow
-                            key={mes}
-                            className="border-slate-800 hover:bg-slate-800/50"
-                          >
-                            <TableCell className="font-medium text-slate-300">
-                              {mes}
-                            </TableCell>
-                            <TableCell className="text-right font-bold text-slate-100">
-                              {contadoresMeses[index]}
-                            </TableCell>
-                          </TableRow>
-                        ),
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-            <Card className="bg-slate-900 border-slate-800 border-l-4 border-l-red-600 shadow-lg">
-              <CardHeader className="bg-slate-950/40 border-b border-slate-800 py-4">
-                <CardTitle className="text-xs font-black text-red-500 uppercase tracking-wider text-center flex items-center justify-center gap-2">
-                  <span>🚨</span> Sanciones
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-slate-800 hover:bg-transparent bg-slate-900/20">
-                      <TableHead className="text-slate-400 font-bold text-center w-16">
-                        Cant.
-                      </TableHead>
-                      <TableHead className="text-slate-400 font-bold">
-                        Cruz
-                      </TableHead>
-                      <TableHead className="text-right text-slate-400 font-bold">
-                        Motivo
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sanciones.map((sancion, index) => (
-                      <TableRow
-                        key={index}
-                        className="border-slate-800 hover:bg-red-900/20 transition-colors"
+              {/* Tarjeta 2: Sanciones por Inactividad */}
+              <div className="bg-[#0E1422] border border-rose-500/30 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-widest text-rose-400">
+                    🚨 Sanciones vigentes
+                  </span>
+                  <span className="text-[11px] px-2 py-0.5 rounded bg-rose-500/15 text-rose-300">
+                    {sanciones.length} registros
+                  </span>
+                </div>
+                <div className="divide-y divide-slate-800/70 text-xs">
+                  {sanciones.map((s) => (
+                    <div
+                      key={s.nombre}
+                      className="py-2 flex items-center justify-between gap-2"
+                    >
+                      <div>
+                        <span className="font-bold text-white">{s.nombre}</span>{" "}
+                        <span className="text-slate-400">• {s.motivo}</span>
+                      </div>
+                      <span
+                        className={`px-2 py-0.5 rounded font-bold shrink-0 ${
+                          s.cant >= 4
+                            ? "bg-rose-500/20 text-rose-300"
+                            : "bg-amber-500/20 text-amber-300"
+                        }`}
                       >
-                        <TableCell className="font-black text-red-400 text-center text-base">
-                          {sancion.cant}
-                        </TableCell>
-                        <TableCell className="font-bold text-slate-200">
-                          {sancion.nombre}
-                        </TableCell>
-                        <TableCell className="text-right font-medium text-slate-400 text-xs">
-                          {sancion.motivo}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                        {s.cant} {s.cant === 1 ? "sanción" : "sanciones"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tarjeta 3: Actividad por Mes */}
+              <div className="bg-[#0E1422] border border-slate-800/90 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                    Partidos por Mes
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  {nombresMeses.map((mes, idx) => {
+                    const cant = contadoresMeses[idx] || 0;
+                    return (
+                      <div
+                        key={mes}
+                        className={`p-2 rounded-lg border text-center ${
+                          cant > 0
+                            ? "bg-slate-900/90 border-slate-800 text-slate-200"
+                            : "bg-slate-950/40 border-slate-900 text-slate-600"
+                        }`}
+                      >
+                        <span className="block text-[10px] uppercase">
+                          {mes.slice(0, 3)}
+                        </span>
+                        <span className="font-sport font-bold text-sm text-[#00E676]">
+                          {cant}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          }
+        />
       </div>
-      <PlayerCardModal jugadoresDb={todosLosJugadores} />
     </main>
   );
 }
