@@ -71,7 +71,7 @@ export function PlayerAvatarSvg({
           fontWeight="700"
           fontSize="11"
         >
-          ¡SE CASA!
+          #20 TAQUITO
         </text>
       </svg>
     );
@@ -440,7 +440,7 @@ function PlayerCardModalContent({
           {/* Izquierda: Carta FUT Personalizada */}
           <div className="md:col-span-5 flex flex-col items-center">
             <div
-              className={`relative w-64 rounded-[28px] p-5 border-2 bg-gradient-to-b overflow-hidden transition-all duration-300 select-none ${info.theme.cardGradient}`}
+              className={`relative w-64 rounded-[28px] p-5 border-2 bg-linear-to-b overflow-hidden transition-all duration-300 select-none ${info.theme.cardGradient}`}
             >
               {/* Fila Superior */}
               <div className="relative z-10 flex items-start justify-between">
