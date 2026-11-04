@@ -419,7 +419,7 @@ export default function DashboardInteractive({
                               <span className="font-sport text-sm">
                                 {p.info.ovr}
                               </span>
-                              <span className="text-[10px] opacity-80">
+                              <span className="hidden sm:inline text-[10px] opacity-80">
                                 ({p.info.avg10.toFixed(1)} • {p.info.posLabel})
                               </span>
                             </span>

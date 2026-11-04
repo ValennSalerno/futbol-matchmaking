@@ -379,11 +379,11 @@ function PlayerCardModalContent({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-start md:items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto"
       onClick={closeModal}
     >
       <div
-        className="relative w-full max-w-4xl rounded-3xl bg-[#0B101C] border border-slate-700/80 shadow-2xl overflow-hidden my-8 text-white"
+        className="relative w-full max-w-4xl rounded-3xl bg-[#0B101C] border border-slate-700/80 shadow-2xl overflow-hidden shrink-0 my-4 md:my-8 my:8 text-white"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header */}
