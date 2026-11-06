@@ -63,7 +63,7 @@ export default async function IqDebugger() {
                 + Winrate
               </TableHead>
               <TableHead className="font-bold text-cyan-500 text-center">
-                Rating Visible
+                OVR + Winrate
               </TableHead>
               <TableHead className="font-bold text-purple-400 text-center">
                 IQ (Base 7)

@@ -160,7 +160,7 @@ export function getPlayerStatsAndTier(player: JugadorStatsDB) {
     return {
       isGK: false,
       isWeddingTOTY: true,
-      posLabel: "CM",
+      posLabel: "ST",
       avg10: 9.9,
       ovr: 99,
       winrate,

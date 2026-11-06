@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getPlayerStatsAndTier, JugadorStatsDB } from "@/lib/playerStats";
 import { PlayerAvatarSvg } from "@/components/ui/PlayerCardModal";
@@ -10,6 +10,26 @@ interface DashboardInteractiveProps {
   totalPartidos: number;
   childrenSidebar: React.ReactNode;
 }
+
+type ColumnId = "pos" | "jugador" | "ovr" | "pj" | "asistencia" | "winrate";
+
+const DEFAULT_COLUMNS: ColumnId[] = [
+  "pos",
+  "jugador",
+  "ovr",
+  "pj",
+  "asistencia",
+  "winrate",
+];
+
+const COLUMN_LABELS: Record<ColumnId, string> = {
+  pos: "Pos",
+  jugador: "Jugador",
+  ovr: "Carta / OVR",
+  pj: "PJ",
+  asistencia: "% Asistencia",
+  winrate: "Winrate",
+};
 
 export default function DashboardInteractive({
   jugadores,
@@ -22,6 +42,110 @@ export default function DashboardInteractive({
   );
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"pj" | "ovr" | "winrate">("pj");
+
+  // Estados para orden de columnas (Drag & Drop + Popover) y visibilidad en Mobile
+  const [columns, setColumns] = useState<ColumnId[]>(DEFAULT_COLUMNS);
+  const [mobileHiddenCols, setMobileHiddenCols] = useState<ColumnId[]>([]);
+  const [draggedCol, setDraggedCol] = useState<ColumnId | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<ColumnId | null>(null);
+  const [showColMenu, setShowColMenu] = useState(false);
+
+  // Cargar configuración guardada en el navegador
+  useEffect(() => {
+    try {
+      const savedCols = localStorage.getItem("taquito_table_columns");
+      if (savedCols) {
+        const parsed = JSON.parse(savedCols) as ColumnId[];
+        if (
+          Array.isArray(parsed) &&
+          parsed.length === DEFAULT_COLUMNS.length &&
+          DEFAULT_COLUMNS.every((c) => parsed.includes(c))
+        ) {
+          setColumns(parsed);
+        }
+      }
+
+      const savedHidden = localStorage.getItem("taquito_mobile_hidden_cols");
+      if (savedHidden) {
+        const parsedHidden = JSON.parse(savedHidden) as ColumnId[];
+        if (Array.isArray(parsedHidden)) {
+          setMobileHiddenCols(parsedHidden);
+        }
+      }
+    } catch {
+      // Fallback silencioso a valores por defecto
+    }
+  }, []);
+
+  const updateColumns = (newCols: ColumnId[]) => {
+    setColumns(newCols);
+    try {
+      localStorage.setItem("taquito_table_columns", JSON.stringify(newCols));
+    } catch {
+      // Ignorar errores de storage
+    }
+  };
+
+  const toggleMobileColumn = (colId: ColumnId) => {
+    // Evitamos que oculten al Jugador para que la fila siempre tenga sentido
+    if (colId === "jugador") return;
+
+    const next = mobileHiddenCols.includes(colId)
+      ? mobileHiddenCols.filter((c) => c !== colId)
+      : [...mobileHiddenCols, colId];
+
+    setMobileHiddenCols(next);
+    try {
+      localStorage.setItem("taquito_mobile_hidden_cols", JSON.stringify(next));
+    } catch {
+      // Ignorar errores de storage
+    }
+  };
+
+  const handleDragStart = (col: ColumnId) => setDraggedCol(col);
+
+  const handleDragOver = (e: React.DragEvent, col: ColumnId) => {
+    e.preventDefault();
+    if (draggedCol && draggedCol !== col) {
+      setDragOverCol(col);
+    }
+  };
+
+  const handleDrop = (targetCol: ColumnId) => {
+    if (!draggedCol || draggedCol === targetCol) {
+      setDraggedCol(null);
+      setDragOverCol(null);
+      return;
+    }
+    const next = [...columns];
+    const fromIdx = next.indexOf(draggedCol);
+    const toIdx = next.indexOf(targetCol);
+    next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, draggedCol);
+    updateColumns(next);
+    setDraggedCol(null);
+    setDragOverCol(null);
+  };
+
+  const moveColumn = (index: number, direction: -1 | 1) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= columns.length) return;
+    const next = [...columns];
+    const temp = next[index];
+    next[index] = next[targetIndex];
+    next[targetIndex] = temp;
+    updateColumns(next);
+  };
+
+  const resetColumns = () => {
+    updateColumns(DEFAULT_COLUMNS);
+    setMobileHiddenCols([]);
+    try {
+      localStorage.removeItem("taquito_mobile_hidden_cols");
+    } catch {
+      // Ignorar
+    }
+  };
 
   const openModal = (nombre: string) => {
     router.push(`/?jugador=${encodeURIComponent(nombre)}`, { scroll: false });
@@ -330,7 +454,8 @@ export default function DashboardInteractive({
 
           {/* Grilla Principal: Tabla (2 cols) + Sidebar (1 col) */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-[#0E1422] border border-slate-800/90 rounded-2xl overflow-hidden h-fit">
+            {/* Quitamos overflow-hidden de acá para que el menú de Columnas nunca se corte */}
+            <div className="lg:col-span-2 bg-[#0E1422] border border-slate-800/90 rounded-2xl h-fit">
               <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-base font-bold text-white flex items-center gap-2">
@@ -340,7 +465,8 @@ export default function DashboardInteractive({
                     </span>
                   </h2>
                   <p className="text-xs text-slate-400">
-                    Estadísticas sincronizadas
+                    Estadísticas sincronizadas • Arrastrá las columnas o usá el
+                    botón Columnas
                   </p>
                 </div>
 
@@ -364,19 +490,178 @@ export default function DashboardInteractive({
                     <option value="ovr">Ordenar: Puntaje OVR</option>
                     <option value="winrate">Ordenar: Winrate %</option>
                   </select>
+
+                  {/* Botón y Menú Popover de Columnas */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowColMenu((prev) => !prev)}
+                      className={`border rounded-lg px-2.5 py-1.5 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+                        showColMenu
+                          ? "bg-[#00E676] text-slate-950 border-[#00E676]"
+                          : "bg-slate-900/90 border-slate-700/80 hover:border-[#00E676] text-slate-200"
+                      }`}
+                    >
+                      <span>⇄</span>
+                      <span>Columnas</span>
+                    </button>
+
+                    {showColMenu && (
+                      <div className="absolute right-0 mt-2 w-72 rounded-xl bg-[#0B101C] border border-slate-700 shadow-2xl p-3 z-50 space-y-2.5">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                            Orden y Visibilidad
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={resetColumns}
+                              className="text-[11px] text-[#00E676] hover:underline font-semibold cursor-pointer"
+                            >
+                              Resetear
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowColMenu(false)}
+                              className="text-xs text-slate-400 hover:text-white px-1 cursor-pointer"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          {columns.map((colId, idx) => {
+                            const isVisibleMobile =
+                              !mobileHiddenCols.includes(colId);
+                            const isLocked = colId === "jugador";
+
+                            return (
+                              <div
+                                key={colId}
+                                className="flex items-center justify-between bg-slate-900/90 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs"
+                              >
+                                <span className="font-medium text-slate-200 truncate pr-2">
+                                  {idx + 1}. {COLUMN_LABELS[colId]}
+                                </span>
+
+                                <div className="flex items-center gap-2">
+                                  {/* Switch visible en PC y Mobile para poder probarlo en localhost */}
+                                  <button
+                                    type="button"
+                                    disabled={isLocked}
+                                    onClick={() => toggleMobileColumn(colId)}
+                                    title={
+                                      isLocked
+                                        ? "Jugador siempre visible"
+                                        : "Mostrar/ocultar en celular"
+                                    }
+                                    className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors ${
+                                      isVisibleMobile
+                                        ? "bg-[#00E676]"
+                                        : "bg-slate-700"
+                                    } ${
+                                      isLocked
+                                        ? "opacity-40 cursor-not-allowed"
+                                        : "cursor-pointer"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`inline-block h-3 w-3 transform rounded-full bg-slate-950 transition-transform ${
+                                        isVisibleMobile
+                                          ? "translate-x-3.5"
+                                          : "translate-x-0.5"
+                                      }`}
+                                    />
+                                  </button>
+
+                                  {/* Flechas para cambiar posición */}
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      disabled={idx === 0}
+                                      onClick={() => moveColumn(idx, -1)}
+                                      className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-200 cursor-pointer"
+                                      title="Mover a la izquierda"
+                                    >
+                                      ◀
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={idx === columns.length - 1}
+                                      onClick={() => moveColumn(idx, 1)}
+                                      className="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-200 cursor-pointer"
+                                      title="Mover a la derecha"
+                                    >
+                                      ▶
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <p className="text-[10px] text-slate-400 pt-1 leading-relaxed">
+                          <span className="block text-[#00E676] font-medium mb-0.5">
+                            📱 El switch verde oculta o muestra la columna en
+                            pantallas móviles.
+                          </span>
+                          💻 En PC también podés arrastrar los encabezados de la
+                          tabla directamente.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-b-2xl">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-800/80 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-900/40">
-                      <th className="py-3 px-3">Pos</th>
-                      <th className="py-3 px-3">Jugador</th>
-                      <th className="py-3 px-3">Carta / OVR</th>
-                      <th className="py-3 px-3 text-center">PJ</th>
-                      <th className="py-3 px-3">% Asistencia</th>
-                      <th className="py-3 px-3 text-right">Winrate</th>
+                    <tr className="border-b border-slate-800/80 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-900/40 select-none">
+                      {columns.map((colId) => {
+                        const isDragging = draggedCol === colId;
+                        const isOver = dragOverCol === colId;
+                        const isHiddenMobile = mobileHiddenCols.includes(colId);
+                        const visibilityClass = isHiddenMobile
+                          ? "hidden sm:table-cell"
+                          : "";
+                        const alignClass =
+                          colId === "winrate"
+                            ? "text-right"
+                            : colId === "pj"
+                              ? "text-center"
+                              : "";
+
+                        return (
+                          <th
+                            key={colId}
+                            draggable
+                            onDragStart={() => handleDragStart(colId)}
+                            onDragOver={(e) => handleDragOver(e, colId)}
+                            onDragLeave={() => setDragOverCol(null)}
+                            onDrop={() => handleDrop(colId)}
+                            onDragEnd={() => {
+                              setDraggedCol(null);
+                              setDragOverCol(null);
+                            }}
+                            title="Arrastrá para cambiar de posición"
+                            className={`py-3 px-3 cursor-grab active:cursor-grabbing transition-colors ${visibilityClass} ${alignClass} ${
+                              isDragging ? "opacity-40 bg-slate-800/60" : ""
+                            } ${
+                              isOver
+                                ? "border-l-2 border-l-[#00E676] bg-emerald-950/30 text-white"
+                                : "hover:text-slate-200"
+                            }`}
+                          >
+                            <span className="inline-flex items-center gap-1">
+                              <span className="text-[10px] opacity-40">⠿</span>
+                              <span>{COLUMN_LABELS[colId]}</span>
+                            </span>
+                          </th>
+                        );
+                      })}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60 text-sm">
@@ -406,69 +691,114 @@ export default function DashboardInteractive({
                           onClick={() => openModal(p.nombre)}
                           className={`cursor-pointer transition group ${rowBg}`}
                         >
-                          <td
-                            className={`py-3 px-3 font-sport text-sm ${
-                              isTop3
-                                ? "text-[#00E676] font-bold"
-                                : "text-slate-400"
-                            }`}
-                          >
-                            #{pos}
-                          </td>
-                          <td className="py-3 px-3">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-white group-hover:text-[#00E676] transition">
-                                {p.nombre}
-                              </span>
-                              {p.info.isGK && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                  🧤 GK
-                                </span>
-                              )}
-                              {p.info.isWeddingTOTY && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 border border-yellow-400/40">
-                                  💍
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-3 px-3">
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border ${p.info.theme.pillClass}`}
-                            >
-                              <span className="font-sport text-sm">
-                                {p.info.ovr}
-                              </span>
-                              <span className="hidden sm:inline text-[10px] opacity-80">
-                                ({p.info.posLabel})
-                              </span>
-                            </span>
-                          </td>
-                          <td className="py-3 px-3 text-center font-semibold text-slate-200">
-                            {p.partidos_totales}
-                          </td>
-                          <td className="py-3 px-3">
-                            <div className="w-28">
-                              <div className="flex justify-between text-xs mb-1">
-                                <span className="text-slate-300 font-medium">
-                                  {p.asistencia}%
-                                </span>
-                              </div>
-                              <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                                <div
-                                  className="h-full bg-[#00E676] rounded-full"
-                                  style={{ width: `${p.asistencia}%` }}
-                                ></div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-3 px-3 text-right">
-                            <span
-                              className={`inline-block px-2.5 py-1 rounded-lg text-xs font-bold border ${winrateClass}`}
-                            >
-                              {p.info.winrate}%
-                            </span>
-                          </td>
+                          {columns.map((colId) => {
+                            const isHiddenMobile =
+                              mobileHiddenCols.includes(colId);
+                            const visibilityClass = isHiddenMobile
+                              ? "hidden sm:table-cell"
+                              : "";
+
+                            switch (colId) {
+                              case "pos":
+                                return (
+                                  <td
+                                    key="pos"
+                                    className={`py-3 px-3 font-sport text-sm ${visibilityClass} ${
+                                      isTop3
+                                        ? "text-[#00E676] font-bold"
+                                        : "text-slate-400"
+                                    }`}
+                                  >
+                                    #{pos}
+                                  </td>
+                                );
+                              case "jugador":
+                                return (
+                                  <td
+                                    key="jugador"
+                                    className={`py-3 px-3 ${visibilityClass}`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-semibold text-white group-hover:text-[#00E676] transition">
+                                        {p.nombre}
+                                      </span>
+                                      {p.info.isGK && (
+                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                          🧤 GK
+                                        </span>
+                                      )}
+                                      {p.info.isWeddingTOTY && (
+                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 border border-yellow-400/40">
+                                          💍
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
+                                );
+                              case "ovr":
+                                return (
+                                  <td
+                                    key="ovr"
+                                    className={`py-3 px-3 ${visibilityClass}`}
+                                  >
+                                    <span
+                                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border ${p.info.theme.pillClass}`}
+                                    >
+                                      <span className="font-sport text-sm">
+                                        {p.info.ovr}
+                                      </span>
+                                      <span className="hidden sm:inline text-[10px] opacity-80">
+                                        ({p.info.avg10.toFixed(1)} •{" "}
+                                        {p.info.posLabel})
+                                      </span>
+                                    </span>
+                                  </td>
+                                );
+                              case "pj":
+                                return (
+                                  <td
+                                    key="pj"
+                                    className={`py-3 px-3 text-center font-semibold text-slate-200 ${visibilityClass}`}
+                                  >
+                                    {p.partidos_totales}
+                                  </td>
+                                );
+                              case "asistencia":
+                                return (
+                                  <td
+                                    key="asistencia"
+                                    className={`py-3 px-3 ${visibilityClass}`}
+                                  >
+                                    <div className="w-24 sm:w-28">
+                                      <div className="flex justify-between text-xs mb-1">
+                                        <span className="text-slate-300 font-medium">
+                                          {p.asistencia}%
+                                        </span>
+                                      </div>
+                                      <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                                        <div
+                                          className="h-full bg-[#00E676] rounded-full"
+                                          style={{ width: `${p.asistencia}%` }}
+                                        ></div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                );
+                              case "winrate":
+                                return (
+                                  <td
+                                    key="winrate"
+                                    className={`py-3 px-3 text-right ${visibilityClass}`}
+                                  >
+                                    <span
+                                      className={`inline-block px-2.5 py-1 rounded-lg text-xs font-bold border ${winrateClass}`}
+                                    >
+                                      {p.info.winrate}%
+                                    </span>
+                                  </td>
+                                );
+                            }
+                          })}
                         </tr>
                       );
                     })}
