@@ -84,6 +84,26 @@ export default function DashboardInteractive({
     return found.length >= 4 ? found.slice(0, 5) : enrichedPlayers.slice(0, 5);
   }, [enrichedPlayers]);
 
+  type ColumnId = "pos" | "jugador" | "ovr" | "pj" | "asistencia" | "winrate";
+
+  const DEFAULT_COLUMNS: ColumnId[] = [
+    "pos",
+    "jugador",
+    "ovr",
+    "pj",
+    "asistencia",
+    "winrate",
+  ];
+
+  const COLUMN_LABELS: Record<ColumnId, string> = {
+    pos: "Pos",
+    jugador: "Jugador",
+    ovr: "Carta / OVR",
+    pj: "PJ",
+    asistencia: "% Asistencia",
+    winrate: "Winrate",
+  };
+
   return (
     <div className="space-y-6">
       {/* Barra de pestañas interactivas + Accesos rápidos al Wizard */}
@@ -268,7 +288,7 @@ export default function DashboardInteractive({
               >
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-amber-500/15 text-amber-300">
-                    🔥 Rey del Winrate (+15 PJ)
+                    🔥 Winrate mas alto (+5 PJ)
                   </span>
                   <h3 className="font-sport text-xl font-bold text-white mt-1.5 group-hover:text-amber-300 transition uppercase">
                     {topWinrate.nombre}
@@ -291,7 +311,7 @@ export default function DashboardInteractive({
               >
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300">
-                    💎 Mejor OVR Oficial
+                    💎 Mejor OVR
                   </span>
                   <h3 className="font-sport text-xl font-bold text-white mt-1.5 group-hover:text-cyan-300 transition uppercase">
                     {topOvr.nombre}
@@ -420,7 +440,7 @@ export default function DashboardInteractive({
                                 {p.info.ovr}
                               </span>
                               <span className="hidden sm:inline text-[10px] opacity-80">
-                                ({p.info.avg10.toFixed(1)} • {p.info.posLabel})
+                                ({p.info.posLabel})
                               </span>
                             </span>
                           </td>
