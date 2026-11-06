@@ -44,14 +44,8 @@ export default function DashboardInteractive({
   const [sortBy, setSortBy] = useState<"pj" | "ovr" | "winrate">("pj");
 
   // Estados para orden de columnas (Drag & Drop + Popover) y visibilidad en Mobile
-  const [columns, setColumns] = useState<ColumnId[]>(DEFAULT_COLUMNS);
-  const [mobileHiddenCols, setMobileHiddenCols] = useState<ColumnId[]>([]);
-  const [draggedCol, setDraggedCol] = useState<ColumnId | null>(null);
-  const [dragOverCol, setDragOverCol] = useState<ColumnId | null>(null);
-  const [showColMenu, setShowColMenu] = useState(false);
-
-  // Cargar configuración guardada en el navegador
-  useEffect(() => {
+  const [columns, setColumns] = useState<ColumnId[]>(() => {
+    if (typeof window === "undefined") return DEFAULT_COLUMNS;
     try {
       const savedCols = localStorage.getItem("taquito_table_columns");
       if (savedCols) {
@@ -61,21 +55,34 @@ export default function DashboardInteractive({
           parsed.length === DEFAULT_COLUMNS.length &&
           DEFAULT_COLUMNS.every((c) => parsed.includes(c))
         ) {
-          setColumns(parsed);
+          return parsed;
         }
       }
+    } catch {
+      // Fallback silencioso
+    }
+    return DEFAULT_COLUMNS;
+  });
 
+  const [mobileHiddenCols, setMobileHiddenCols] = useState<ColumnId[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
       const savedHidden = localStorage.getItem("taquito_mobile_hidden_cols");
       if (savedHidden) {
         const parsedHidden = JSON.parse(savedHidden) as ColumnId[];
         if (Array.isArray(parsedHidden)) {
-          setMobileHiddenCols(parsedHidden);
+          return parsedHidden;
         }
       }
     } catch {
-      // Fallback silencioso a valores por defecto
+      // Fallback silencioso
     }
-  }, []);
+    return [];
+  });
+
+  const [draggedCol, setDraggedCol] = useState<ColumnId | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<ColumnId | null>(null);
+  const [showColMenu, setShowColMenu] = useState(false);
 
   const updateColumns = (newCols: ColumnId[]) => {
     setColumns(newCols);
@@ -207,26 +214,6 @@ export default function DashboardInteractive({
       .filter(Boolean) as typeof enrichedPlayers;
     return found.length >= 4 ? found.slice(0, 5) : enrichedPlayers.slice(0, 5);
   }, [enrichedPlayers]);
-
-  type ColumnId = "pos" | "jugador" | "ovr" | "pj" | "asistencia" | "winrate";
-
-  const DEFAULT_COLUMNS: ColumnId[] = [
-    "pos",
-    "jugador",
-    "ovr",
-    "pj",
-    "asistencia",
-    "winrate",
-  ];
-
-  const COLUMN_LABELS: Record<ColumnId, string> = {
-    pos: "Pos",
-    jugador: "Jugador",
-    ovr: "Carta / OVR",
-    pj: "PJ",
-    asistencia: "% Asistencia",
-    winrate: "Winrate",
-  };
 
   return (
     <div className="space-y-6">
