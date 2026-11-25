@@ -18,6 +18,9 @@ export default function Matchmaking() {
   }>({ jugadores_campo: [], arqueros: [] });
   const [seleccionados, setSeleccionados] = useState<string[]>([]);
   const [invitados, setInvitados] = useState<Invitado[]>([]);
+  const [gkPenalizados, setGkPenalizados] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const [nombreInvitado, setNombreInvitado] = useState("");
   const [ratingInvitado, setRatingInvitado] = useState<number | "">("");
@@ -31,6 +34,15 @@ export default function Matchmaking() {
     nombre: string;
     equipo: "equipoA" | "equipoB";
   } | null>(null);
+
+  const arquerosConPregunta = seleccionados.filter((nombre) => {
+    const clean = nombre.toLowerCase().trim();
+    return clean === "junco" || clean === "junquito";
+  });
+
+  const faltanRespuestasGk = arquerosConPregunta.some(
+    (nombre) => gkPenalizados[nombre] === undefined,
+  );
 
   const router = useRouter();
 
@@ -60,6 +72,11 @@ export default function Matchmaking() {
 
   const quitarJugador = (nombre: string) => {
     setSeleccionados((prev) => prev.filter((n) => n !== nombre));
+    setGkPenalizados((prev) => {
+      const next = { ...prev };
+      delete next[nombre];
+      return next;
+    });
   };
 
   const agregarInvitado = () => {
@@ -80,7 +97,20 @@ export default function Matchmaking() {
     const jugCampo = db.jugadores_campo.filter((j) =>
       seleccionados.includes(j.nombre),
     );
-    const arq = db.arqueros.filter((a) => seleccionados.includes(a.nombre));
+    const arq = db.arqueros
+      .filter((a) => seleccionados.includes(a.nombre))
+      .map((a) =>
+        gkPenalizados[a.nombre]
+          ? {
+              ...a,
+              valoracion_general: Math.max(
+                1,
+                Number((a.valoracion_general - 1.5).toFixed(1)),
+              ),
+              ovrPenalty: 15,
+            }
+          : a,
+      );
 
     const falsosJugadoresCampo: JugadorCampo[] = invitados.map((inv) => ({
       nombre: inv.nombre,
@@ -307,10 +337,62 @@ export default function Matchmaking() {
             </div>
           </div>
 
+          {arquerosConPregunta.length > 0 && (
+            <div className="space-y-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
+              {arquerosConPregunta.map((nombre) => {
+                const respuesta = gkPenalizados[nombre];
+                return (
+                  <div
+                    key={nombre}
+                    className="flex flex-wrap items-center justify-between gap-2"
+                  >
+                    <span className="text-sm font-medium">
+                      {nombre} vino pajeado o será jugador de campo? (-15 OVR)
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setGkPenalizados((prev) => ({
+                            ...prev,
+                            [nombre]: true,
+                          }))
+                        }
+                        className={`rounded px-3 py-1 text-xs font-bold transition ${
+                          respuesta === true
+                            ? "bg-amber-500 text-black"
+                            : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                        }`}
+                      >
+                        SI
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setGkPenalizados((prev) => ({
+                            ...prev,
+                            [nombre]: false,
+                          }))
+                        }
+                        className={`rounded px-3 py-1 text-xs font-bold transition ${
+                          respuesta === false
+                            ? "bg-emerald-500 text-black"
+                            : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                        }`}
+                      >
+                        NO
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           <button
             type="button"
             onClick={armarEquipos}
-            disabled={!esCantidadValida}
+            disabled={!esCantidadValida || faltanRespuestasGk}
             className="w-full bg-[#00E676] hover:brightness-110 text-slate-950 font-black rounded-2xl p-4 transition-all disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(0,230,118,0.25)]"
           >
             {esCantidadValida
@@ -353,7 +435,7 @@ export default function Matchmaking() {
             </div>
             <div className="h-3 rounded-full bg-slate-800 overflow-hidden flex">
               <div
-                className="bg-gradient-to-r from-emerald-500 to-[#00E676] transition-all duration-300"
+                className="bg-linear-to-r from-emerald-500 to-[#00E676] transition-all duration-300"
                 style={{
                   width: `${
                     avgA + avgB > 0 ? (avgA / (avgA + avgB)) * 100 : 50
@@ -361,7 +443,7 @@ export default function Matchmaking() {
                 }}
               ></div>
               <div
-                className="bg-gradient-to-l from-cyan-500 to-sky-400 transition-all duration-300"
+                className="bg-linear-to-l from-cyan-500 to-sky-400 transition-all duration-300"
                 style={{
                   width: `${
                     avgA + avgB > 0 ? (avgB / (avgA + avgB)) * 100 : 50
@@ -391,7 +473,7 @@ export default function Matchmaking() {
             {/* Cancha 2D (Lado A y Lado B) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Lado Equipo A */}
-              <div className="pitch-pattern rounded-2xl border-2 border-emerald-500/30 p-5 relative min-h-[320px] flex flex-col justify-between">
+              <div className="pitch-pattern rounded-2xl border-2 border-emerald-500/30 p-5 relative min-h-80 flex flex-col justify-between">
                 <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2">
                   <span className="font-sport font-bold text-sm tracking-wider text-[#00E676]">
                     ⚽ EQUIPO A (VERDE)
@@ -442,7 +524,7 @@ export default function Matchmaking() {
               </div>
 
               {/* Lado Equipo B */}
-              <div className="pitch-pattern rounded-2xl border-2 border-cyan-500/30 p-5 relative min-h-[320px] flex flex-col justify-between">
+              <div className="pitch-pattern rounded-2xl border-2 border-cyan-500/30 p-5 relative min-h-80 flex flex-col justify-between">
                 <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2">
                   <span className="font-sport font-bold text-sm tracking-wider text-cyan-300">
                     ⚽ EQUIPO B (AZUL)

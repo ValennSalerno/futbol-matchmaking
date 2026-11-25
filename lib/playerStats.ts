@@ -20,6 +20,7 @@ export interface JugadorStatsDB {
   posicionamiento?: number | null;
   saque?: number | null;
   mano_a_mano?: number | null;
+  ovrPenalty?: number;
 }
 
 export interface StatItem {
@@ -178,8 +179,12 @@ export function getPlayerStatsAndTier(player: JugadorStatsDB) {
     const saq = Number(player.saque ?? 8);
     const man = Number(player.mano_a_mano ?? (isJunquito ? 9 : 8));
 
-    const avg10 = Number(((ref + ata + pos + saq + man) / 5).toFixed(1));
-    const ovr = Math.round(avg10 * 10);
+    const penaltyOvr = player.ovrPenalty ?? 0;
+    const avg10 = Math.max(
+      1,
+      Number((((ref + ata + pos + saq + man) / 5) - penaltyOvr / 10).toFixed(1))
+    );
+    const ovr = Math.max(1, Math.round(avg10 * 10));
 
     const stats: StatItem[] = [
       {

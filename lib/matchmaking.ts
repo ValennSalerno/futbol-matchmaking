@@ -19,6 +19,7 @@ export type Arquero = {
   partidos_totales: number;
   partidos_jugados: number;
   partidos_ganados: number;
+  ovrPenalty?: number;
 };
 
 // Tipo interno temporal para manejar el sorteo sin romper la UI
