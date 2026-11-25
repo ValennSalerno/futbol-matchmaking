@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getPlayerStatsAndTier, JugadorStatsDB } from "@/lib/playerStats";
 import { PlayerAvatarSvg } from "@/components/ui/PlayerCardModal";
@@ -218,7 +218,7 @@ export default function DashboardInteractive({
   return (
     <div className="space-y-6">
       {/* Barra de pestañas interactivas + Accesos rápidos al Wizard */}
-      <div className="rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/70 to-emerald-950/30 border border-slate-800/90 p-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="rounded-2xl bg-linear-to-r from-slate-900/90 via-slate-900/70 to-emerald-950/30 border border-slate-800/90 p-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2 bg-slate-950/90 p-1 rounded-xl border border-slate-800">
           <button
             onClick={() => setActiveTab("dashboard")}
@@ -300,7 +300,7 @@ export default function DashboardInteractive({
                   {p.info.theme.tierLabel}
                 </span>
                 <div
-                  className={`relative w-full max-w-[230px] rounded-[26px] p-4 border-2 bg-gradient-to-b overflow-hidden transition-transform duration-300 group-hover:-translate-y-1.5 select-none ${p.info.theme.cardGradient}`}
+                  className={`relative w-full max-w-57.5 rounded-[26px] p-4 border-2 bg-linear-to-b overflow-hidden transition-transform duration-300 group-hover:-translate-y-1.5 select-none ${p.info.theme.cardGradient}`}
                 >
                   <div className="relative z-10 flex items-start justify-between">
                     <div className="flex flex-col items-center leading-none">
@@ -371,7 +371,7 @@ export default function DashboardInteractive({
             {topAsistencia && (
               <div
                 onClick={() => openModal(topAsistencia.nombre)}
-                className="cursor-pointer group bg-gradient-to-br from-[#0E1422] to-emerald-950/30 border border-emerald-500/30 hover:border-[#00E676] rounded-2xl p-4 transition-all flex items-center justify-between"
+                className="cursor-pointer group bg-linear-to-br from-[#0E1422] to-emerald-950/30 border border-emerald-500/30 hover:border-[#00E676] rounded-2xl p-4 transition-all flex items-center justify-between"
               >
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-emerald-500/15 text-[#00E676]">
@@ -395,7 +395,7 @@ export default function DashboardInteractive({
             {topWinrate && (
               <div
                 onClick={() => openModal(topWinrate.nombre)}
-                className="cursor-pointer group bg-gradient-to-br from-[#0E1422] to-amber-950/30 border border-amber-500/30 hover:border-amber-400 rounded-2xl p-4 transition-all flex items-center justify-between"
+                className="cursor-pointer group bg-linear-to-br from-[#0E1422] to-amber-950/30 border border-amber-500/30 hover:border-amber-400 rounded-2xl p-4 transition-all flex items-center justify-between"
               >
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-amber-500/15 text-amber-300">
@@ -418,7 +418,7 @@ export default function DashboardInteractive({
             {topOvr && (
               <div
                 onClick={() => openModal(topOvr.nombre)}
-                className="cursor-pointer group bg-gradient-to-br from-[#0E1422] to-cyan-950/30 border border-cyan-500/30 hover:border-cyan-400 rounded-2xl p-4 transition-all flex items-center justify-between"
+                className="cursor-pointer group bg-linear-to-br from-[#0E1422] to-cyan-950/30 border border-cyan-500/30 hover:border-cyan-400 rounded-2xl p-4 transition-all flex items-center justify-between"
               >
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300">

@@ -131,6 +131,13 @@ export default async function Home() {
               </p>
             </div>
           </div>
+
+          <Link
+            href="/foro"
+            className="px-4 py-2.5 rounded-xl bg-[#0E1422] border border-[#00E676]/40 text-[#00E676] font-bold text-xs tracking-wide hover:bg-[#00E676] hover:text-slate-950 transition shadow-[0_0_15px_rgba(0,230,118,0.15)] shrink-0"
+          >
+            💬 FORO Y VOTOS
+          </Link>
         </header>
 
         {/* Top KPI Cards + Acción de Partido */}
